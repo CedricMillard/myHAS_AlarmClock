@@ -336,12 +336,12 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
         manualAlarmTime = iTime;
         alarmTime = manualAlarmTime*60;
 
-        if(pDisp)
-            pDisp->setAlarmTime(iTime);
-    
         //update in dB
         pSQLClient->updateObject("AlarmClock", ID, "ManualAlarmTime", to_string(manualAlarmTime));
     }
+    
+    if(pDisp)
+        pDisp->setAlarmTime(manualAlarmTime);
 }
 
 void myHAS_Alarm::ringAlarm(string iAlarmSound)

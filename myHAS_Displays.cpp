@@ -7,13 +7,13 @@
 void myHAS_Displays::displayAlarm(bool idispAlarm)
 {
 	dispAlarm = idispAlarm;
-	if(idispAlarm) dispEqualizer = false;
+	//if(idispAlarm) dispEqualizer = false;
 }
 
 void myHAS_Displays::displayEqualizer(bool idispEq)
 {
 	dispEqualizer = idispEq;
-	if(idispEq) dispAlarm = false;
+	//if(idispEq) dispAlarm = false;
 }
 
 void myHAS_Displays::stopDisplay()
@@ -27,5 +27,5 @@ void myHAS_Displays::stopDisplay()
 void myHAS_Displays::startDisplay()
 {
     keepRunning = true;
-	dispThread = thread(&myHAS_Displays::runDisplay, this);
+    dispThread = thread(&myHAS_Displays::runDisplay, this);
 }

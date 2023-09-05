@@ -34,6 +34,7 @@ void myHAS_DisplaySegments::runDisplay()
 
     while(keepRunning)
     {
+	semiColon = true;
 	if(dispAlarm)
 	{
 	    if(alarmTime>=0)

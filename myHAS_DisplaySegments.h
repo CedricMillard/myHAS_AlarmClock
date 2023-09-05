@@ -3,7 +3,7 @@
 
 #include "myHAS_Displays.h"
 
-using namespace std;
+//using namespace std;
 
 class myHAS_DisplaySegments : public myHAS_Displays
 {
