@@ -19,6 +19,8 @@ void myHAS_Inputs::pressSnooze()
     {
         if (pAlarm->getAlarmState()==as_ON)
             pAlarm->snoozeAlarm();
+        else
+            pSound->stopRadio();
     }
 }
 
@@ -29,6 +31,13 @@ void myHAS_Inputs::unPressSnooze()
 
 void myHAS_Inputs::pressSleep()
 {
+    if(mode==m_AUTO_ALARM || mode==m_MAN_ALARM)
+    {
+        if(pAlarm->getAlarmState()!=as_OFF)
+            pAlarm->stopAlarm();
+        else
+            pSound->playRadio();
+    }
     
 }
 

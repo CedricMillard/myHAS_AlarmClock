@@ -1,8 +1,8 @@
 /**
  * TODO: 
+ *  - Add function to check if radio is ON or OFF
  *  - Manage error in the json received from google in case it is incorrect 
  *  - Split WakeUpMsg Preparation from playing it to stop it in case alarm is stopped before it is ready...
- *  - Read radio station from dB
  *  - trigger dB update to change radio list on the fly
  * 
  */

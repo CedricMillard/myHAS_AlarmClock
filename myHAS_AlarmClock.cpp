@@ -15,6 +15,10 @@
 //#define _SCREEN_
 //#define _KEYBOARD_
 
+#ifndef _KEYBOARD_
+myHAS_InputButtons* myHAS_InputButtons::pInputButtons = NULL;
+#endif
+
 int main()
 {	
 	myHAS_Environment * pEnv = new myHAS_Environment();
@@ -42,7 +46,7 @@ int main()
 	myHAS_InputKeyboard *pInputKeyboard = new myHAS_InputKeyboard(pDisp, pSound, pAlarm);
 	pInput = (myHAS_Inputs *)pInputKeyboard;
 #else
-	myHAS_InputButtons *pInpuButtons = new myHAS_InputButtons(pDisp, pSound, pAlarm);
+	myHAS_InputButtons *pInpuButtons = myHAS_InputButtons::getInputButtons(pDisp, pSound, pAlarm);
 	pInput = (myHAS_Inputs *)pInpuButtons;
 #endif
 
