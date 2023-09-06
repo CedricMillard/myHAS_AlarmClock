@@ -335,9 +335,6 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
     {
         manualAlarmTime = iTime;
         alarmTime = manualAlarmTime*60;
-
-        //update in dB
-        pSQLClient->updateObject("AlarmClock", ID, "ManualAlarmTime", to_string(manualAlarmTime));
     }
     
     if(pDisp)
@@ -394,4 +391,12 @@ void myHAS_Alarm::updateRulesInDB()
 
     //update attribute in dB
    	pSQLClient->updateObject("AlarmClock", ID, "Rules", strbuf.GetString());
+}
+
+void myHAS_Alarm::saveAlarmTime()
+{
+    if(aMode==am_AUTO)
+        return;
+    
+    pSQLClient->updateObject("AlarmClock", ID, "ManualAlarmTime", to_string(manualAlarmTime));
 }

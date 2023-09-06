@@ -47,6 +47,7 @@ class myHAS_Alarm
         long getManualAlarmTime(){return manualAlarmTime;}
         //Define snooze time in seconds (default 30sec)
         void setSnoozeTime(int iSnoozeTime){snoozeTime = iSnoozeTime;}
+        void saveAlarmTime();
     
     private:
         void alarmLoop();

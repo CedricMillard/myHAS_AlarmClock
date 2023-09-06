@@ -38,7 +38,6 @@ void myHAS_Inputs::pressSleep()
         else
             pSound->playRadio();
     }
-    
 }
 
 void myHAS_Inputs::unPressSleep()
@@ -52,12 +51,14 @@ void myHAS_Inputs::pressHour()
     {
         if(mode!=m_AUTO_ALARM)
         {
-            pAlarm->setManualAlarmTime((pAlarm->getManualAlarmTime()+60)%(24*60));
+            if(isAlarmPressed)
+                changeAlarmMin(-1);
+            else
+                changeAlarmHour(-1);
         }
     }
-    else if (mode == m_PLAYER)
+    else if (pSound->isRadioON())
         pSound->changeRadio(-1);
-    
 }
 
 void myHAS_Inputs::unPressHour()
@@ -71,15 +72,13 @@ void myHAS_Inputs::pressMin()
     {
         if(mode!=m_AUTO_ALARM)
         {
-            long alarmTime = pAlarm->getManualAlarmTime();
-            int alarmHour = alarmTime/60;
-            int alarmMin = (alarmTime%60);
-            alarmMin=(alarmMin+1)%60;
-            alarmTime=alarmHour*60 + alarmMin;
-            pAlarm->setManualAlarmTime(alarmTime);
+            if(isAlarmPressed)
+                changeAlarmMin(1);
+            else
+                changeAlarmHour(1);
         }
     }
-    else if (mode == m_PLAYER)
+    else if (pSound->isRadioON())
         pSound->changeRadio(1);
 }
 
@@ -92,22 +91,30 @@ void myHAS_Inputs::pressAlarm()
 {
     showAlarm=true;
     pDisp->displayAlarm(true);
+    isAlarmPressed = true;
 }
 
 void myHAS_Inputs::unPressAlarm()
 {
     showAlarm=false;
-    pDisp->displayAlarm(false);        
+    pDisp->displayAlarm(false);
+    isAlarmPressed = false;
+    pAlarm->saveAlarmTime();
 }
 
 void myHAS_Inputs::pressTime()
 {
-    
+    showAlarm=true;
+    pDisp->displayAlarm(true);
+    isTimePressed = true;
 }
 
 void myHAS_Inputs::unPressTime()
 {
-    
+    showAlarm=false;
+    pDisp->displayAlarm(false);
+    isTimePressed = false;
+    pAlarm->saveAlarmTime();
 }
 
 void myHAS_Inputs::setMode(MODE iMode)
@@ -151,4 +158,28 @@ void myHAS_Inputs::setMode(MODE iMode)
 void myHAS_Inputs::audioSourceRadio(bool iIsRadio)
 {
     
+}
+
+void myHAS_Inputs::changeAlarmMin(int iIncrement)
+{
+    long alarmTime = pAlarm->getManualAlarmTime();
+    int alarmHour = alarmTime/60;
+    int alarmMin = (alarmTime%60);
+    alarmMin=alarmMin+iIncrement;
+    if(alarmMin>59) alarmMin = 0;
+    else if(alarmMin<0) alarmMin = 59; 
+    alarmTime=alarmHour*60 + alarmMin;
+    pAlarm->setManualAlarmTime(alarmTime);
+}
+
+void myHAS_Inputs::changeAlarmHour(int iIncrement)
+{
+    long alarmTime = pAlarm->getManualAlarmTime();
+    int alarmHour = alarmTime/60;
+    int alarmMin = (alarmTime%60);
+    alarmHour=alarmHour+iIncrement;
+    if(alarmHour>23) alarmHour = alarmHour - 24;
+    else if(alarmHour<0) alarmHour = 24 + alarmHour; 
+    alarmTime=alarmHour*60 + alarmMin;
+    pAlarm->setManualAlarmTime(alarmTime);
 }

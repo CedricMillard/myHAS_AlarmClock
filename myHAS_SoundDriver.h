@@ -19,6 +19,7 @@ class myHAS_SoundDriver
         void stopRadio();
         //if index==1 => next station, if index = -1 prev station
         void changeRadio(int iIndex);
+        bool isRadioON();
 
     private:
         void getMP3fromText(string iVoiceName);

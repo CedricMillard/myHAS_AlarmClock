@@ -25,8 +25,6 @@ myHAS_InputButtons * myHAS_InputButtons::getInputButtons(myHAS_Displays *iDisp, 
         buttonCallback();
     }
     
-    
-    
     return pInputButtons;
 }
 
@@ -35,7 +33,7 @@ void myHAS_InputButtons::buttonCallback()
     //debouncing buttons => filter out event coming less than 20ms from last interrupt
     //Does not work well, better to try with a capacitor
     unsigned int deltaT = millis() - pInputButtons->lastInterrupt;
-    if(deltaT<100)
+    if(deltaT<20)
         return;
     pInputButtons->lastInterrupt = millis();
     

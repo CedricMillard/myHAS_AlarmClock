@@ -81,6 +81,9 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 
 void myHAS_SoundDriver::playRadio(string iRadioURI)
 {	
+	if(radioPlayerPid>0)
+		return;
+	
 	if(iRadioURI.length()==0)
 		iRadioURI = currentRadio;
 	int pid = fork();
@@ -101,8 +104,12 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 void myHAS_SoundDriver::stopRadio()
 {
 	if(radioPlayerPid>0)
+	{
 		kill(radioPlayerPid,SIGKILL);
-	radioPlayerPid = -1;
+		sleep(0.2);
+		radioPlayerPid = -1;
+	}
+	
 }
 
 void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
@@ -180,4 +187,9 @@ void myHAS_SoundDriver::changeRadio(int iIndex)
 		
 	currentRadio = listRadio[currentRadioIndex];
 	playRadio();
+}
+
+bool myHAS_SoundDriver::isRadioON()
+{
+	return radioPlayerPid>0;
 }
