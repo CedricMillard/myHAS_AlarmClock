@@ -20,6 +20,7 @@ class myHAS_SoundDriver
         //if index==1 => next station, if index = -1 prev station
         void changeRadio(int iIndex);
         bool isRadioON();
+        bool check_url(char *url);
 
     private:
         void getMP3fromText(string iVoiceName);
