@@ -17,7 +17,7 @@ myHAS_InputButtons * myHAS_InputButtons::getInputButtons(myHAS_Displays *iDisp, 
         {
             wiringPiISR(pInputButtons->gpioButtons[i],INT_EDGE_BOTH, & myHAS_InputButtons::buttonCallback);
         }
-        for (int i=0; i<4; i++)
+        for (int i=0; i<5; i++)
         {
             wiringPiISR(pInputButtons->gpioSelectors[i],INT_EDGE_BOTH, & myHAS_InputButtons::buttonCallback);
         }
@@ -33,8 +33,8 @@ void myHAS_InputButtons::buttonCallback()
     //debouncing buttons => filter out event coming less than 20ms from last interrupt
     //Does not work well, better to try with a capacitor
     unsigned int deltaT = millis() - pInputButtons->lastInterrupt;
-    if(deltaT<20)
-        return;
+    //if(deltaT<10) //was 20 before
+      //  return;
     pInputButtons->lastInterrupt = millis();
     
     int currButtonState = 0;
@@ -112,33 +112,36 @@ void myHAS_InputButtons::buttonCallback()
     }
     
     //A selector has changed
-    //order Radio, AutoAlarm, ManAlarm, Bluetooth
+    //order Off, Radio, AutoAlarm, ManAlarm, Bluetooth
     int modeChanged = deltaS >> 1;
     if(modeChanged)
     {
         switch (currSelectorState>>1)
         {
-            case 0b111:
+            case 0b1111:
+                break;
+                
+            case 0b0111:
                 pInputButtons->setMode(m_OFF);
                 break;
             
             //radio mode
-            case 0b011:
+            case 0b1011:
                 pInputButtons->setMode(m_PLAYER);
                 break;
         
             //auto alarm mode
-            case 0b101:
+            case 0b1101:
                 pInputButtons->setMode(m_AUTO_ALARM);
                 break;
             
             //manual alarm mode
-            case 0b110:
+            case 0b1110:
                 pInputButtons->setMode(m_MAN_ALARM);
                 break;
                 
             default:
-                pInputButtons->setMode(m_OFF);
+                //pInputButtons->setMode(m_OFF);
                 break;
         }
     }
@@ -179,7 +182,7 @@ void myHAS_InputButtons::readInputs(int &oButtons, int& oSelector)
         oButtons = 2 * oButtons + digitalRead (gpioButtons[i]);
     } 
     
-    for (int i=0; i<4;i++)
+    for (int i=0; i<5;i++)
     {
         oSelector = 2 * oSelector + digitalRead (gpioSelectors[i]);
     } 

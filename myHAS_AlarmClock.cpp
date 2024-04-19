@@ -10,6 +10,7 @@
 #include "myHAS_InputKeyboard.h"
 #include "myHAS_InputButtons.h"
 #include "../myHAS_Library/myHAS_SQLClient.h"
+#include "../myHAS_Library/myHAS_Utilities.h"
 
 #define _ID_ 90010
 //#define _SCREEN_

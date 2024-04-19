@@ -19,8 +19,14 @@ void myHAS_Inputs::pressSnooze()
     {
         if (pAlarm->getAlarmState()==as_ON)
             pAlarm->snoozeAlarm();
-        else
+        else if (pSound->isRadioON())
             pSound->stopRadio();
+        else
+            pSound->readText(pAlarm->getText("SnoozeText"), pAlarm->voiceName);
+    }
+    else
+    {        
+        pSound->readText(pAlarm->getText("SnoozeText"), pAlarm->voiceName);
     }
 }
 

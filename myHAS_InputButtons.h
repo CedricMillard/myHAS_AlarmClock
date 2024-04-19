@@ -25,9 +25,14 @@ class myHAS_InputButtons : public myHAS_Inputs
         void readInputs(int &oButtons, int& oSelector);
         
         //Time, Hour, Min, Alarm, Sleep, Snooze
-        int gpioButtons[6]={13,12,3,2,0,4};
+        //int gpioButtons[6]={13,12,3,2,0,4};
         //Radio, AutoAlarm, ManAlarm, Bluetooth
-        int gpioSelectors[4]={7,9,8,16};
+        //int gpioSelectors[4]={7,9,8,16};
+        
+        //Time, Hour, Min, Alarm, Sleep, Snooze
+        int gpioButtons[6]={21,30,14,13,12,22};
+        //Off, Radio, AutoAlarm, ManAlarm, Bluetooth
+        int gpioSelectors[5]={7,0,3,2,8};
         
         int prevButtonState = 0;
         int prevSelectorState = 0;

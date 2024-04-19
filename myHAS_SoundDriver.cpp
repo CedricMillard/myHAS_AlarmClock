@@ -14,6 +14,8 @@
 #include <curl/curl.h>
 #include <b64/decode.h>
 #include "../include/rapidjson/document.h"
+#include <wiringPi.h>
+#include "../myHAS_Library/myHAS_Utilities.h"
 
 using namespace std;
 using namespace rapidjson;
@@ -30,6 +32,13 @@ myHAS_SoundDriver::myHAS_SoundDriver(myHAS_SQLClient *iSQLClient)
 		return;
 	}
 	currentRadio = listRadio[0];
+	
+	wiringPiSetup();
+	pinMode(pinMute, OUTPUT);
+    pullUpDnControl(pinMute, PUD_DOWN);
+    digitalWrite(pinMute,0);
+    //update the token for faster speech
+    getGoolgeCloudToken();
 }
 
 size_t myHAS_SoundDriver::curlCallback(void *data, size_t size, size_t nmemb, void *clientp)
@@ -52,14 +61,19 @@ size_t myHAS_SoundDriver::manageCurlOutput(void *data, size_t size, size_t nmemb
 
 string myHAS_SoundDriver::getGoolgeCloudToken()
 {
-	string token = "";
-	char buffer[128];
-	FILE * pipe = popen("gcloud auth application-default print-access-token","r");
-	if (!pipe) return "";
-	while (fgets(buffer, sizeof(buffer), pipe) !=NULL)
-		token += buffer;
-	pclose(pipe);
-	return token;
+	//update token if empty or older than a year
+	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>3600*24*365)
+	{
+		gCloudToken = "";
+		char buffer[128];
+		FILE * pipe = popen("gcloud auth application-default print-access-token","r");
+		if (!pipe) return "";
+		while (fgets(buffer, sizeof(buffer), pipe) !=NULL)
+			gCloudToken += buffer;
+		pclose(pipe);
+		//cout<<"token = "<<token<<endl;
+	}
+	return gCloudToken;
 }
 
 void myHAS_SoundDriver::readText(string iText, string iVoiceName)
@@ -69,11 +83,21 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 	
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
 	{
-		string command = "cvlc " + pathToMP3File + " vlc://quit";
+		digitalWrite(pinMute,1);
+		string command = "cvlc " + pathToMP3File + " --gain 2 vlc://quit";
 		system(command.c_str());
+		digitalWrite(pinMute,0);
         //delete the file to not have an outdated message
         if(remove(pathToMP3File.c_str()))
             cout<<"ERROR deleting "<<pathToMP3File<<endl;
+	}
+	else if (access(pathToMP3FileBackup.c_str(), F_OK) == 0)
+	{
+		cout<<"ERROR audio file not generated, playing back-up "<<pathToMP3File<<endl;
+		digitalWrite(pinMute,1);
+		string command = "cvlc " + pathToMP3FileBackup + " --gain 2 vlc://quit";
+		system(command.c_str());
+		digitalWrite(pinMute,0);
 	}
 	else
 		cout<<"ERROR: FILE "<<pathToMP3File<<" not found"<<endl;
@@ -87,11 +111,14 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 	if(iRadioURI.length()==0)
 		iRadioURI = currentRadio;
 	int pid = fork();
+	digitalWrite(pinMute,1);
 	if (pid==0)
 	{
+		
 		if(execlp("mplayer","-afm", "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
         {
             cout<<"ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
+            digitalWrite(pinMute,0);
             exit(-1);
         }
 	}
@@ -103,21 +130,21 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 
 void myHAS_SoundDriver::stopRadio()
 {
+	digitalWrite(pinMute,0);
 	if(radioPlayerPid>0)
 	{
 		kill(radioPlayerPid,SIGKILL);
 		sleep(0.2);
 		radioPlayerPid = -1;
-	}
-	
+	}	
 }
 
 void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 {
 	string languageCode = iVoiceName.substr(0,5);
-	
+	cout<<"getMP3fromText()"<<endl;
     string ttsRequest="{'input':{'text':";
-	ttsRequest += "'" + ttsText + "'";
+	ttsRequest += "\"" + ttsText + "\"";
 	ttsRequest+="},'voice':{'languageCode':";
     ttsRequest=ttsRequest+"'"+languageCode+"'";
     ttsRequest+=",'name':";
@@ -133,8 +160,13 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	//     "https://texttospeech.googleapis.com/v1/text:synthesize" >>  bonjour.json
 	struct curl_slist *list = NULL;
 	curl_easy_setopt(handle, CURLOPT_URL, "https://texttospeech.googleapis.com/v1/text:synthesize");
-	string token = "Authorization: Bearer ";
-	token += getGoolgeCloudToken();
+	string token = getGoolgeCloudToken();
+	if (token.length()==0)
+	{
+		cout<<"Failed to retrieve gCloud token"<<endl;
+		return;
+	}
+	token = "Authorization: Bearer "+token;
 	
 	list = curl_slist_append(list, strndup(token.c_str(),token.length()-1));
 	if(list==NULL)
@@ -165,6 +197,11 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	//Converti en mp3 avec libbase64 et enregistre un fichier mp3
 	Document conSettings;
 	conSettings.Parse(audioJson.c_str());
+	if(!conSettings.HasMember("audioContent"))
+	{
+		cout<<"Json does not contain audio: "<<audioJson<<endl;
+		return;
+	}
 	istringstream encodedString (conSettings["audioContent"].GetString());
 	ostringstream decodedString;
 	base64::decoder D;
@@ -174,6 +211,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	fclose(fBonjour);
 	audioJson = "";
     ttsText="";
+    cout<<"done with creating mp3 file"<<endl;
 }
 
 void myHAS_SoundDriver::changeRadio(int iIndex)

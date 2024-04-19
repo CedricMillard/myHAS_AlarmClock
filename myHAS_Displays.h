@@ -20,6 +20,9 @@ class myHAS_Displays
     //status: 0 = OFF, 1 = ON, 2 = SNOOZE
     virtual void setAlarmStatus(int iStatus){}
     
+    //0=OFF, 1=AUTO, 2=MANUAL
+    void setAlarmMode(int iMode){alrmMode = iMode;}
+    
     protected:
     virtual void runDisplay() = 0;
     
@@ -29,6 +32,7 @@ class myHAS_Displays
     bool dispEqualizer = false;
     bool keepRunning = true;
     thread dispThread;
+    int alrmMode=0;
 };
 
 #endif

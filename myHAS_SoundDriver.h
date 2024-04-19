@@ -3,6 +3,7 @@
 
 #include <string>
 #include <thread>
+#include <time.h>
 #include "../include/ArrayCed.h"
 #include "../myHAS_Library/myHAS_SQLClient.h"
 
@@ -30,11 +31,15 @@ class myHAS_SoundDriver
         int radioPlayerPid = -1;
         string ttsText;
         string pathToMP3File = "/home/admin/bonjour.mp3";
+        string pathToMP3FileBackup = "/home/admin/bonjour_backup.mp3";
         string currentRadio;
         int currentRadioIndex = 0;
         Array<string> listRadio;
         string audioJson="";
         myHAS_SQLClient *pSQLClient = NULL;
+        int pinMute = 9;
+        string gCloudToken="";
+        time_t tokenUpdateTime=0;
         
 };
 

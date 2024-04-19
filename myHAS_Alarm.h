@@ -13,9 +13,6 @@ using namespace std;
 enum alarmMode {am_OFF, am_MANUAL, am_AUTO};
 enum alarmState {as_OFF, as_ON, as_SNOOZE};
 
-long getCurrentTimeSec();
-uint8_t getDay();
-
 struct Rule
 {
   int alarmTime = -1;
@@ -48,10 +45,11 @@ class myHAS_Alarm
         //Define snooze time in seconds (default 30sec)
         void setSnoozeTime(int iSnoozeTime){snoozeTime = iSnoozeTime;}
         void saveAlarmTime();
+        string getText(string iTextField);
+        string voiceName="fr-FR-Wavenet-A";
     
     private:
         void alarmLoop();
-        string getWakeUptext();
         void ringAlarm(string iAlarmSound="");
         void importParameters();
         void computeNextAlarm(Rule iRule, long icurrTime);
@@ -64,8 +62,7 @@ class myHAS_Alarm
         myHAS_Environment *pEnv = NULL;
         myHAS_SQLClient *pSQLClient = NULL;
         bool keepRunning = true;
-        string voiceName="fr-FR-Wavenet-A";
-        
+                
         int ID = 0;
         
         int manualAlarmTime = -1;

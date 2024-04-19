@@ -6,7 +6,7 @@
  */
 
 #include "myHAS_Alarm.h"
-#include <time.h>
+#include "../myHAS_Library/myHAS_Utilities.h"
 #include <unistd.h> 
 #include <stdio.h>
 #include <cmath>
@@ -17,31 +17,6 @@
 
 using namespace rapidjson;
 using namespace std;
-
-long getCurrentTimeSec()
-{
-	time_t rawtime;
-	struct tm *timeinfo;
-	char sTime[10];
-	
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
-	long currentSec = timeinfo->tm_sec + 60*timeinfo->tm_min + 3600*timeinfo->tm_hour;
-	return currentSec;
-}
-
-uint8_t getDay()
-{
-    uint8_t day;
-    time_t rawtime;
-    struct tm *timeinfo;
-    time(&rawtime);
-    timeinfo = localtime(&rawtime);
-    char sTime[2];
-    strftime(sTime, 2, "%w", timeinfo);
-    day = atoi(sTime);
-    return day;
-}
 
 myHAS_Alarm::myHAS_Alarm(int iID, myHAS_Displays *iDisp, myHAS_SoundDriver *iSound, myHAS_Environment *iEnv, myHAS_SQLClient *iSQLClient)
 {
@@ -84,14 +59,14 @@ void myHAS_Alarm::importParameters()
     }
 }
 
-string myHAS_Alarm::getWakeUptext()
+string myHAS_Alarm::getText(string iTextField)
 {
-	time_t rawtime;
-	struct tm *timeinfo;
-	time(&rawtime);
-	timeinfo = localtime(&rawtime);
+    time_t rawtime;
+    struct tm *timeinfo;
+    time(&rawtime);
+    timeinfo = localtime(&rawtime);
 
-	string request = pSQLClient->getStringValue("AlarmClock", ID, "WakeUpPhrase");
+    string request = pSQLClient->getStringValue("AlarmClock", ID, iTextField);
     string sTime = to_string(timeinfo->tm_hour) + " heures ";
     if(timeinfo->tm_min>0) 
         sTime += to_string(timeinfo->tm_min);
@@ -150,7 +125,7 @@ string myHAS_Alarm::getWakeUptext()
 void myHAS_Alarm::startAlarmLoop()
 {
     stopAlarmLoop();
-	keepRunning = true;
+    keepRunning = true;
     alarmThread = new thread(&myHAS_Alarm::alarmLoop, this);
 }
 
@@ -169,9 +144,9 @@ void myHAS_Alarm::stopAlarmLoop()
 
 void myHAS_Alarm::alarmLoop()
 {
-	//bool a=true;
+    bool a=true;
     
-    while(keepRunning)
+    while(keepRunning && aMode!=am_OFF)
 	{
         long timeNow = getCurrentTimeSec();
         switch(aMode)
@@ -305,6 +280,7 @@ void myHAS_Alarm::snoozeAlarm()
 
 void myHAS_Alarm::setAlarmMode(alarmMode iMode)
 {
+    cout<<"setAlarmMode "<<iMode<<endl;
     if (iMode!=aMode)
     {
         aMode = iMode;
@@ -313,15 +289,23 @@ void myHAS_Alarm::setAlarmMode(alarmMode iMode)
         {
             nextAlarmTime= 99999;
             pDisp->setAlarmTime(-1);
+	    pDisp->setAlarmMode(1);
             startAlarmLoop();
+	    cout<<"Alarm loop started in auto mode"<<endl;
             return;
         }
-        
-        pDisp->setAlarmTime(manualAlarmTime);
-        if (iMode==am_MANUAL)
-            startAlarmLoop();
-        else
+	else if (iMode==am_MANUAL){
+            pDisp->setAlarmTime(manualAlarmTime);
+	    pDisp->setAlarmMode(2);
+	    startAlarmLoop();
+	    cout<<"Alarm loop started in manual mode"<<endl;
+	}        
+        else{
             stopAlarmLoop();
+	    pDisp->setAlarmTime(manualAlarmTime);
+	    pDisp->setAlarmMode(0);
+	    cout<<"Alarm loop stopped"<<endl;
+	}
     }
 }
 
@@ -345,10 +329,12 @@ void myHAS_Alarm::ringAlarm(string iAlarmSound)
 {
     if(pDisp)
         pDisp->setAlarmStatus(1);
-
+    cout<<"Alarm voice is "<<voiceName<<endl;
     if(pSound)
     {
-        pSound->readText(getWakeUptext(), voiceName);
+	string wkUpText = getText("WakeUpPhrase");
+	cout<<"wakeUp text "<<wkUpText<<endl;
+        pSound->readText(wkUpText, voiceName);
 	
         //Allow to not start radio if snooze or off is pressed during wake-up phrase
         if(aState==as_ON)

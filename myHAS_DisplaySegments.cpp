@@ -34,9 +34,9 @@ void myHAS_DisplaySegments::runDisplay()
 
     while(keepRunning)
     {
-	semiColon = true;
 	if(dispAlarm)
 	{
+	    semiColon = true;
 	    if(alarmTime>=0)
 	    {
 		long bufAl = alarmTime;
@@ -88,6 +88,11 @@ void myHAS_DisplaySegments::runDisplay()
 	    digit2 = timeinfo->tm_hour %10;
 	    digit3 = (int)(timeinfo->tm_min /10);
 	    digit4= timeinfo->tm_min %10;
+	    
+	    if(rawtime%2 && alrmMode && alarmTime>=0)
+		semiColon = false;
+	    else
+		semiColon = true;
 	}						
 	displaySegments(1, digit1, cat, semiColon);
 	displaySegments(2, digit2, cat, semiColon);
