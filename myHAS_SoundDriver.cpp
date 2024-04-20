@@ -116,7 +116,7 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 	if (pid==0)
 	{
 		
-		if(execlp("mplayer",/*"-afm",*/ "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
+		if(execlp("mplayer", "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
         {
             cout<<"ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
             digitalWrite(pinMute,0);
