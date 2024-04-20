@@ -71,7 +71,7 @@ string myHAS_SoundDriver::getGoolgeCloudToken()
 		while (fgets(buffer, sizeof(buffer), pipe) !=NULL)
 			gCloudToken += buffer;
 		pclose(pipe);
-		//cout<<"token = "<<token<<endl;
+		cout<<"Google token retrieved"<<endl;
 	}
 	return gCloudToken;
 }
@@ -84,7 +84,8 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
 	{
 		digitalWrite(pinMute,1);
-		string command = "cvlc " + pathToMP3File + " --gain 2 vlc://quit";
+		//string command = "cvlc " + pathToMP3File + " --gain 2 vlc://quit";
+		string command = "mplayer -af volume=5:0 -nocache -noconsolecontrols -really-quiet "+pathToMP3File;
 		system(command.c_str());
 		digitalWrite(pinMute,0);
         //delete the file to not have an outdated message
@@ -115,7 +116,7 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 	if (pid==0)
 	{
 		
-		if(execlp("mplayer","-afm", "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
+		if(execlp("mplayer",/*"-afm",*/ "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
         {
             cout<<"ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
             digitalWrite(pinMute,0);
