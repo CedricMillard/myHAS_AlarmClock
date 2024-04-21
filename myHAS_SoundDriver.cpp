@@ -1,8 +1,5 @@
 /**
  * TODO: 
- *  - Manage bluetooth speaker mode:
- * 		- Activate by calling pulseaudio --start
- *      - Deactivate by calling pulseaudio --kill
  *  - trigger dB update to change radio list on the fly
  * 
  */
@@ -274,14 +271,16 @@ void myHAS_SoundDriver::setMusicMode(musicMode iMode)
 
 void myHAS_SoundDriver::startBluetooth()
 {
-	string command = "pulseaudio --start";
+	cout<<"Start Bluetooth"<<endl;
+	string command = "systemctl --user unmask pulseaudio.socket && systemctl --user start pulseaudio.service";
 	system(command.c_str());
 	digitalWrite(pinMute,1);
 }
 
 void myHAS_SoundDriver::stopBluetooth()
 {
-	string command = "pulseaudio --kill";
+	cout<<"Stop Bluetooth"<<endl;
+	string command = "systemctl --user mask pulseaudio.socket && systemctl --user stop pulseaudio.service";
 	system(command.c_str());
 	digitalWrite(pinMute,0);
 }

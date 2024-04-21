@@ -1,5 +1,5 @@
 /**
- * 
+ * TODO: watchdog to allow reboot with key combination (as separate process to reboot even in case of code crash)
  */
 
 #include "myHAS_DisplaySegments.h"
