@@ -12,8 +12,7 @@ void myHAS_Inputs::pressSnooze()
     //Add that in other state, pressing snooze will display temperature
     if(mode==m_PLAYER)
     {
-        dispEqualizer = !dispEqualizer;
-        pDisp->displayEqualizer(dispEqualizer);
+        pDisp->setDisplayMode(dm_TIME);
     }
     else if (mode==m_AUTO_ALARM || mode==m_MAN_ALARM)
     {
@@ -32,7 +31,13 @@ void myHAS_Inputs::pressSnooze()
 
 void myHAS_Inputs::unPressSnooze()
 {
-    
+    if(mode==m_PLAYER)
+    {
+        if(pSound->getMusicMode()==mm_RADIO)
+            pDisp->setDisplayMode(dm_EQUALIZER);
+        else
+            pDisp->setDisplayMode(dm_BLUETOOTH);
+    }
 }
 
 void myHAS_Inputs::pressSleep()
@@ -53,7 +58,7 @@ void myHAS_Inputs::unPressSleep()
 
 void myHAS_Inputs::pressHour()
 {
-    if(showAlarm)
+    if(isAlarmPressed || isTimePressed)
     {
         if(mode!=m_AUTO_ALARM)
         {
@@ -74,7 +79,7 @@ void myHAS_Inputs::unPressHour()
 
 void myHAS_Inputs::pressMin()
 {
-    if(showAlarm)
+    if(isAlarmPressed || isTimePressed)
     {
         if(mode!=m_AUTO_ALARM)
         {
@@ -95,32 +100,94 @@ void myHAS_Inputs::unPressMin()
 
 void myHAS_Inputs::pressAlarm()
 {
-    showAlarm=true;
-    pDisp->displayAlarm(true);
-    isAlarmPressed = true;
+    switch(mode)
+    {
+        case m_OFF:
+            pDisp->setDisplayMode(dm_ALARM);
+            isAlarmPressed = true;
+            break;
+        case m_PLAYER:
+            break;
+        case m_AUTO_ALARM:
+            pDisp->setDisplayMode(dm_ALARM);
+            break;
+        case m_MAN_ALARM:
+            pDisp->setDisplayMode(dm_ALARM);
+            isAlarmPressed = true;
+            break;
+        default:
+            break;
+    }
 }
 
 void myHAS_Inputs::unPressAlarm()
 {
-    showAlarm=false;
-    pDisp->displayAlarm(false);
-    isAlarmPressed = false;
-    pAlarm->saveAlarmTime();
+    switch(mode)
+    {
+        case m_OFF:
+            pDisp->setDisplayMode(dm_TIME);
+            isAlarmPressed = false;
+            pAlarm->saveAlarmTime();
+            break;
+        case m_PLAYER:
+            break;
+        case m_AUTO_ALARM:
+            pDisp->setDisplayMode(dm_TIME);
+            break;
+        case m_MAN_ALARM:
+            pDisp->setDisplayMode(dm_TIME);
+            isAlarmPressed = false;
+            pAlarm->saveAlarmTime();
+            break;
+        default:
+            break;
+    }
 }
 
 void myHAS_Inputs::pressTime()
 {
-    showAlarm=true;
-    pDisp->displayAlarm(true);
-    isTimePressed = true;
+    switch(mode)
+    {
+        case m_OFF:
+            pDisp->setDisplayMode(dm_ALARM);
+            isTimePressed = true;
+            break;
+        case m_PLAYER:
+            break;
+        case m_AUTO_ALARM:
+            pDisp->setDisplayMode(dm_ALARM);
+            break;
+        case m_MAN_ALARM:
+            pDisp->setDisplayMode(dm_ALARM);
+            isTimePressed = true;
+            break;
+        default:
+            break;
+    }
 }
 
 void myHAS_Inputs::unPressTime()
 {
-    showAlarm=false;
-    pDisp->displayAlarm(false);
-    isTimePressed = false;
-    pAlarm->saveAlarmTime();
+    switch(mode)
+    {
+        case m_OFF:
+            pDisp->setDisplayMode(dm_TIME);
+            isTimePressed = false;
+            pAlarm->saveAlarmTime();
+            break;
+        case m_PLAYER:
+            break;
+        case m_AUTO_ALARM:
+            pDisp->setDisplayMode(dm_TIME);
+            break;
+        case m_MAN_ALARM:
+            pDisp->setDisplayMode(dm_TIME);
+            isTimePressed = false;
+            pAlarm->saveAlarmTime();
+            break;
+        default:
+            break;
+    }
 }
 
 void myHAS_Inputs::setMode(MODE iMode)
@@ -132,28 +199,32 @@ void myHAS_Inputs::setMode(MODE iMode)
     {
         case m_OFF:
 			pAlarm->stopAlarm();
-			pSound->stopRadio();
+			pSound->stopSound();
 			pAlarm->setAlarmMode(am_OFF);
-			pDisp->displayEqualizer(false);
+			pDisp->setDisplayMode(dm_TIME);
             break;
         
         case m_PLAYER:
             pAlarm->setAlarmMode(am_OFF);
-			pSound->playRadio();
-			dispEqualizer = true;
-			pDisp->displayEqualizer(dispEqualizer);
+            //Stop the radio if it was started with sleep button
+            pSound->stopSound();
+			pSound->playSound();
+			if(pSound->getMusicMode()==mm_RADIO)
+                pDisp->setDisplayMode(dm_EQUALIZER);
+            else
+                pDisp->setDisplayMode(dm_BLUETOOTH);
             break;
             
         case m_AUTO_ALARM:
-            pSound->stopRadio();
+            pSound->stopSound();
 			pAlarm->setAlarmMode(am_AUTO);
-			pDisp->displayEqualizer(false);
+			pDisp->setDisplayMode(dm_TIME);
             break;
             
         case m_MAN_ALARM:
-            pSound->stopRadio();
+            pSound->stopSound();
 			pAlarm->setAlarmMode(am_MANUAL);
-			pDisp->displayEqualizer(false);
+			pDisp->setDisplayMode(dm_TIME);
             break;
         
         default:
@@ -161,9 +232,27 @@ void myHAS_Inputs::setMode(MODE iMode)
     }
 }
 
-void myHAS_Inputs::audioSourceRadio(bool iIsRadio)
+void myHAS_Inputs::audioSourceRadio(musicMode iRadioMode)
 {
-    
+    if(iRadioMode == pSound->getMusicMode())
+        return;
+        
+    pSound->setMusicMode(iRadioMode);
+    if(mode== m_PLAYER)
+    {
+        if (iRadioMode == mm_BLUETOOTH)
+        {
+            pSound->stopRadio();
+            pSound->startBluetooth();
+            pDisp->setDisplayMode(dm_BLUETOOTH);
+        }
+        else
+        {
+            pSound->stopBluetooth();
+            pSound->playRadio();
+            pDisp->setDisplayMode(dm_EQUALIZER);
+        }
+    }
 }
 
 void myHAS_Inputs::changeAlarmMin(int iIncrement)

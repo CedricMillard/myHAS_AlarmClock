@@ -30,69 +30,89 @@ void myHAS_DisplaySegments::runDisplay()
     int digit4 = 0;
     bool semiColon = true;
     time_t lastTime = 0;
+    //refresh rate of the equalizer
     int loopCount = 0;
 
     while(keepRunning)
     {
-	if(dispAlarm)
+	switch (dispMode)
 	{
-	    semiColon = true;
-	    if(alarmTime>=0)
-	    {
-		long bufAl = alarmTime;
-		int alarmHour = bufAl/60;
-		bufAl = bufAl%60;
-		int alarmMin = bufAl;
-		
-		digit1 = (int)(alarmHour/10);
-		digit2 = alarmHour%10;
-		digit3 = (int)(alarmMin/10);
-		digit4 = alarmMin%10;
-	    }
-	    else
-	    {
-		//10 is a dash
-		digit1 = 0;
-		digit2 = 10;
-		digit3 = 10;
-		digit4 = 10;
-	    }
-	}
-	else if(dispEqualizer)
-	{
-	    //To directly display graph rather than time until loopCount reaches 0
-	    if(digit2<11)
-	    {
-		digit2 = 11 + rand()%3;
-		digit3 = 11 + rand()%3;
-		digit4 = 11 + rand()%3;
-	    }
-		
-	    if(loopCount==0)
-	    {
-		digit2 = 11 + rand()%3;
-		digit3 = 11 + rand()%3;
-		digit4 = 11 + rand()%3;
-	    }
-	    digit1 = 0;
-	    semiColon = false;
-	}
-	else
-	{
-	    time_t rawtime;
-	    struct tm *timeinfo;
-
-	    time(&rawtime);
-	    timeinfo = localtime(&rawtime);
-	    digit1 = (int)(timeinfo->tm_hour /10);
-	    digit2 = timeinfo->tm_hour %10;
-	    digit3 = (int)(timeinfo->tm_min /10);
-	    digit4= timeinfo->tm_min %10;
-	    
-	    if(rawtime%2 && alrmMode && alarmTime>=0)
-		semiColon = false;
-	    else
+	    case dm_ALARM:
 		semiColon = true;
+		if(alarmTime>=0)
+		{
+		    long bufAl = alarmTime;
+		    int alarmHour = bufAl/60;
+		    bufAl = bufAl%60;
+		    int alarmMin = bufAl;
+		    
+		    digit1 = (int)(alarmHour/10);
+		    digit2 = alarmHour%10;
+		    digit3 = (int)(alarmMin/10);
+		    digit4 = alarmMin%10;
+		}
+		else
+		{
+		    //10 is a dash
+		    digit1 = 0;
+		    digit2 = 10;
+		    digit3 = 10;
+		    digit4 = 10;
+		}
+		break;
+	    case dm_EQUALIZER:
+		//To directly display graph rather than time until loopCount reaches 0
+		if(digit2<11)
+		{
+		    digit2 = 11 + rand()%3;
+		    digit3 = 11 + rand()%3;
+		    digit4 = 11 + rand()%3;
+		}
+		    
+		if(loopCount==0)
+		{
+		    digit2 = 11 + rand()%3;
+		    digit3 = 11 + rand()%3;
+		    digit4 = 11 + rand()%3;
+		}
+		digit1 = 0;
+		semiColon = false;
+		break;
+	    
+	    case dm_BLUETOOTH:
+		digit1 = 0;
+		digit2 = 14;
+		digit3 = 15;
+		digit4 = 18;
+		
+		semiColon = false;
+		break;
+	    
+	    case dm_TIME:
+		time_t rawtime;
+		struct tm *timeinfo;
+
+		time(&rawtime);
+		timeinfo = localtime(&rawtime);
+		digit1 = (int)(timeinfo->tm_hour /10);
+		digit2 = timeinfo->tm_hour %10;
+		digit3 = (int)(timeinfo->tm_min /10);
+		digit4= timeinfo->tm_min %10;
+		
+		if(rawtime%2 && alrmMode && alarmTime>=0)
+		    semiColon = false;
+		else
+		    semiColon = true;
+		break;
+		
+	    default:
+		//Err
+		digit1 = 0;
+		digit2 = 16;
+		digit3 = 17;
+		digit4 = 17;
+		semiColon = false;
+		break;
 	}						
 	displaySegments(1, digit1, cat, semiColon);
 	displaySegments(2, digit2, cat, semiColon);
@@ -127,9 +147,10 @@ void myHAS_DisplaySegments::stopDisplay()
 */
 void myHAS_DisplaySegments::displaySegments (int iDigit, int iNumber, bool cat, bool iSemiColon)
 {
-    //0~9 = digits, 10="-", 11 = "_". 12 = "=", 13 = "///"  
-    int maskTable [14] = {123,96,94,118,101,55,63,112,127,119,4,2,6,22};
-    int maskTableDig1 [14] = {0,3,70,0,0,0,0,0,0,0,0,0,0,0};
+    //0~9 = digits, 10="-", 11 = "_". 12 = "=", 13 = "///", 14="b", 15="t", 16="E", 17="r", 18=" "
+    int maskTable [19] = {123,96,94,118,101,55,63,112,127,119,4,2,6,22,47,15,23,12,0};
+    //0=OFF, 1="1" 2="2"
+    int maskTableDig1 [19] = {0,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     int mask = maskTable[iNumber];
     int maskDig1 = maskTableDig1[iNumber];

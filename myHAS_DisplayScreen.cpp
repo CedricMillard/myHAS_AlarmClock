@@ -33,7 +33,7 @@ void myHAS_DisplayScreen::runDisplay()
         time(&rawtime);
         timeinfo = localtime(&rawtime);
 
-        if (!dispAlarm)
+        if (dispMode==dm_TIME)
             strftime(sTime, 10, "%H%M%S",timeinfo);
         else
         {

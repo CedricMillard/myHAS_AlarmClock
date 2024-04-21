@@ -1,8 +1,8 @@
 /**
  * TODO: 
- *  - Add function to check if radio is ON or OFF
- *  - Manage error in the json received from google in case it is incorrect 
- *  - Split WakeUpMsg Preparation from playing it to stop it in case alarm is stopped before it is ready...
+ *  - Manage bluetooth speaker mode:
+ * 		- Activate by calling pulseaudio --start
+ *      - Deactivate by calling pulseaudio --kill
  *  - trigger dB update to change radio list on the fly
  * 
  */
@@ -59,10 +59,10 @@ size_t myHAS_SoundDriver::manageCurlOutput(void *data, size_t size, size_t nmemb
 	return realsize;
 }
 
-string myHAS_SoundDriver::getGoolgeCloudToken()
+string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 {
-	//update token if empty or older than a year
-	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>3600*24*365)
+	//update token if empty or older than a day
+	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>3600*25 || (iForce && difftime(getUnixTime(), tokenUpdateTime)<3600))
 	{
 		gCloudToken = "";
 		char buffer[128];
@@ -71,6 +71,7 @@ string myHAS_SoundDriver::getGoolgeCloudToken()
 		while (fgets(buffer, sizeof(buffer), pipe) !=NULL)
 			gCloudToken += buffer;
 		pclose(pipe);
+		tokenUpdateTime = getUnixTime();
 		cout<<"Google token retrieved"<<endl;
 	}
 	return gCloudToken;
@@ -96,7 +97,7 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 	{
 		cout<<"ERROR audio file not generated, playing back-up "<<pathToMP3File<<endl;
 		digitalWrite(pinMute,1);
-		string command = "cvlc " + pathToMP3FileBackup + " --gain 2 vlc://quit";
+		string command = "mplayer -af volume=5:0 -nocache -noconsolecontrols -really-quiet "+pathToMP3FileBackup;
 		system(command.c_str());
 		digitalWrite(pinMute,0);
 	}
@@ -106,8 +107,10 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 
 void myHAS_SoundDriver::playRadio(string iRadioURI)
 {	
-	if(radioPlayerPid>0)
+	if(isRadioON())
 		return;
+	
+	stopBluetooth();
 	
 	if(iRadioURI.length()==0)
 		iRadioURI = currentRadio;
@@ -132,7 +135,7 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 void myHAS_SoundDriver::stopRadio()
 {
 	digitalWrite(pinMute,0);
-	if(radioPlayerPid>0)
+	if(isRadioON())
 	{
 		kill(radioPlayerPid,SIGKILL);
 		sleep(0.2);
@@ -198,6 +201,11 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	//Converti en mp3 avec libbase64 et enregistre un fichier mp3
 	Document conSettings;
 	conSettings.Parse(audioJson.c_str());
+	if(!conSettings.IsObject())
+	{
+		cout<<"Json is corrupted: "<<audioJson<<endl;
+		return;
+	}
 	if(!conSettings.HasMember("audioContent"))
 	{
 		cout<<"Json does not contain audio: "<<audioJson<<endl;
@@ -217,6 +225,9 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 
 void myHAS_SoundDriver::changeRadio(int iIndex)
 {
+	if(muzicMode != mm_RADIO)
+		return;
+		
 	stopRadio();
 	currentRadioIndex = currentRadioIndex + iIndex;
 	if(currentRadioIndex >= listRadio.size())
@@ -255,3 +266,37 @@ bool myHAS_SoundDriver::check_url(char *url)
 
     return (response == CURLE_OK);
 }
+
+void myHAS_SoundDriver::setMusicMode(musicMode iMode) 
+{
+	muzicMode = iMode;
+}
+
+void myHAS_SoundDriver::startBluetooth()
+{
+	string command = "pulseaudio --start";
+	system(command.c_str());
+	digitalWrite(pinMute,1);
+}
+
+void myHAS_SoundDriver::stopBluetooth()
+{
+	string command = "pulseaudio --kill";
+	system(command.c_str());
+	digitalWrite(pinMute,0);
+}
+
+void myHAS_SoundDriver::playSound()
+{
+	if(muzicMode==mm_BLUETOOTH)
+		startBluetooth();
+	else
+		playRadio();
+}
+
+void myHAS_SoundDriver::stopSound()
+{
+	stopBluetooth();
+	stopRadio();
+}
+

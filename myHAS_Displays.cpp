@@ -4,7 +4,7 @@
 #include <time.h>
 #include <unistd.h> 
 
-void myHAS_Displays::displayAlarm(bool idispAlarm)
+/*void myHAS_Displays::displayAlarm(bool idispAlarm)
 {
 	dispAlarm = idispAlarm;
 	//if(idispAlarm) dispEqualizer = false;
@@ -14,7 +14,7 @@ void myHAS_Displays::displayEqualizer(bool idispEq)
 {
 	dispEqualizer = idispEq;
 	//if(idispEq) dispAlarm = false;
-}
+}*/
 
 void myHAS_Displays::stopDisplay()
 {

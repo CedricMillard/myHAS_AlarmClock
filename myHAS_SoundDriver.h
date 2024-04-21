@@ -8,6 +8,7 @@
 #include "../myHAS_Library/myHAS_SQLClient.h"
 
 using namespace std;
+enum musicMode {mm_RADIO, mm_BLUETOOTH};
 
 class myHAS_SoundDriver
 {
@@ -22,11 +23,17 @@ class myHAS_SoundDriver
         void changeRadio(int iIndex);
         bool isRadioON();
         bool check_url(char *url);
+        string getGoolgeCloudToken(bool iForce=false);
+        void setMusicMode(musicMode iMode);
+        musicMode getMusicMode() {return muzicMode;}
+        void startBluetooth();
+        void stopBluetooth();
+        void playSound();
+        void stopSound();
 
     private:
         void getMP3fromText(string iVoiceName);
-        string getGoolgeCloudToken();
-        
+                
         int ttsPlayerPid = -1;
         int radioPlayerPid = -1;
         string ttsText;
@@ -40,6 +47,7 @@ class myHAS_SoundDriver
         int pinMute = 9;
         string gCloudToken="";
         time_t tokenUpdateTime=0;
+        musicMode muzicMode=mm_RADIO;
         
 };
 

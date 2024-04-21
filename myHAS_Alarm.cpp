@@ -1,6 +1,5 @@
 /**
  * TODO: 
- *  - Split WakeUpMsg Preparation from playing it to stop it in case alarm is stopped before it is ready...
  *  - Move weather text to config file to manage several language
  * 
  */
@@ -147,8 +146,12 @@ void myHAS_Alarm::alarmLoop()
     bool a=true;
     
     while(keepRunning && aMode!=am_OFF)
-	{
+    {
         long timeNow = getCurrentTimeSec();
+	//Update the cloud token at midnight
+	if (timeNow<10)
+	    pSound->getGoolgeCloudToken(true);
+	    
         switch(aMode)
         {
             case am_OFF:
@@ -210,9 +213,9 @@ void myHAS_Alarm::alarmLoop()
         a=!a;*/
         checkSQLUpdate();
         sleep(1);
-	}
-	
-	stopAlarm();
+    }
+    
+    stopAlarm();
 }
 
 void myHAS_Alarm::computeNextAlarm(Rule iRule, long icurrTime)

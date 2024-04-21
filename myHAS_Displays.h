@@ -5,14 +5,14 @@
 
 using namespace std;
 
+enum displayMode {dm_TIME, dm_ALARM, dm_EQUALIZER, dm_BLUETOOTH};
+
 class myHAS_Displays
 {
     public:
     myHAS_Displays(){}
-    //void setAlarm(long* iAlarmTime);
+    
     void setAlarmTime(long iAlarmTime){alarmTime = iAlarmTime;}
-    void displayAlarm(bool idispAlarm);
-    void displayEqualizer(bool idispEq);
 
     virtual void startDisplay();
     virtual void stopDisplay();
@@ -23,13 +23,13 @@ class myHAS_Displays
     //0=OFF, 1=AUTO, 2=MANUAL
     void setAlarmMode(int iMode){alrmMode = iMode;}
     
+    void setDisplayMode(displayMode iDispMode) {dispMode = iDispMode;}
+    
     protected:
     virtual void runDisplay() = 0;
     
-    //long* alarmTime = NULL;
     long alarmTime = -1;
-    bool dispAlarm = false;
-    bool dispEqualizer = false;
+    displayMode dispMode = dm_TIME;
     bool keepRunning = true;
     thread dispThread;
     int alrmMode=0;

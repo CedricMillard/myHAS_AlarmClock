@@ -149,7 +149,7 @@ void myHAS_InputButtons::buttonCallback()
     if(soundChanged)
     {
         //If currSelectorState = 0 it means we have selected radio
-        pInputButtons->audioSourceRadio(!(currSelectorState%2));
+        pInputButtons->audioSourceRadio(currSelectorState%2 ? mm_BLUETOOTH : mm_RADIO);
     }
 }
 

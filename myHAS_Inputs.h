@@ -31,7 +31,7 @@ class myHAS_Inputs
         void pressTime();
         void unPressTime();
         void setMode(MODE iMode);
-        void audioSourceRadio(bool iIsRadio);
+        void audioSourceRadio(musicMode iRadioMode);
         void changeAlarmMin(int iIncrement);
         void changeAlarmHour(int iIncrement);
         
@@ -40,9 +40,6 @@ class myHAS_Inputs
         myHAS_SoundDriver *pSound = NULL;
         myHAS_Alarm *pAlarm = NULL;
         MODE mode = m_OFF;
-        bool isRadio = true;
-        bool showAlarm = false;
-	bool dispEqualizer = false;
         
         bool isTimePressed = false;
         bool isAlarmPressed = false;
