@@ -30,6 +30,10 @@ class myHAS_SoundDriver
         void stopBluetooth();
         void playSound();
         void stopSound();
+        
+        void tokenUpdateLoop();
+        void startTokenUpdateLoop();
+        void stopTokenUpdateLoop();
 
     private:
         void getMP3fromText(string iVoiceName);
@@ -48,6 +52,8 @@ class myHAS_SoundDriver
         string gCloudToken="";
         time_t tokenUpdateTime=0;
         musicMode muzicMode=mm_RADIO;
+        thread *tokenUpdateThread = NULL;
+        bool keepRunning = true;
         
 };
 

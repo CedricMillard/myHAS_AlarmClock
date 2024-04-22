@@ -37,9 +37,10 @@ int main()
 	myHAS_SQLClient * pSQLClient = new myHAS_SQLClient();
 	
 	myHAS_SoundDriver* pSound = new myHAS_SoundDriver(pSQLClient);
+	pSound->startTokenUpdateLoop();
 		
 	myHAS_Alarm *pAlarm = new myHAS_Alarm(_ID_, pDisp, pSound, pEnv, pSQLClient);
-	pAlarm->setManualAlarmTime((int)(getCurrentTimeSec()/60)+1);
+	//pAlarm->setManualAlarmTime((int)(getCurrentTimeSec()/60)+1);
 
 
 	myHAS_Inputs *pInput = NULL;
@@ -57,6 +58,7 @@ int main()
 	pDisp->stopDisplay();
 	pAlarm->stopAlarmLoop();
 	pSound->stopRadio();
+	pSound->stopTokenUpdateLoop();
 	delete pSQLClient;
 	delete pEnv;
 	delete pAlarm;

@@ -148,10 +148,7 @@ void myHAS_Alarm::alarmLoop()
     while(keepRunning && aMode!=am_OFF)
     {
         long timeNow = getCurrentTimeSec();
-	//Update the cloud token at midnight
-	if (timeNow<10)
-	    pSound->getGoolgeCloudToken(true);
-	    
+		    
         switch(aMode)
         {
             case am_OFF:
@@ -159,7 +156,7 @@ void myHAS_Alarm::alarmLoop()
             
             case am_MANUAL:
                 //Start Alarm
-                if((timeNow - alarmTime) >= 0 && (timeNow - alarmTime) <= 2 && aState!=as_ON)
+		if((timeNow - alarmTime) >= 0 && (timeNow - alarmTime) <= 2 && aState!=as_ON)
                 {
                     aState = as_ON;
                     ringAlarm();

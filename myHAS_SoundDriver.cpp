@@ -59,7 +59,7 @@ size_t myHAS_SoundDriver::manageCurlOutput(void *data, size_t size, size_t nmemb
 string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 {
 	//update token if empty or older than a day
-	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>3600*25 || (iForce && difftime(getUnixTime(), tokenUpdateTime)<3600))
+	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>=3000 || iForce)
 	{
 		gCloudToken = "";
 		char buffer[128];
@@ -69,7 +69,7 @@ string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 			gCloudToken += buffer;
 		pclose(pipe);
 		tokenUpdateTime = getUnixTime();
-		cout<<"Google token retrieved"<<endl;
+		cout<<"Google token updated"<<endl;
 	}
 	return gCloudToken;
 }
@@ -299,3 +299,31 @@ void myHAS_SoundDriver::stopSound()
 	stopRadio();
 }
 
+void myHAS_SoundDriver::startTokenUpdateLoop()
+{
+    stopTokenUpdateLoop();
+    keepRunning = true;
+    tokenUpdateThread = new thread(&myHAS_SoundDriver::tokenUpdateLoop, this);
+}
+
+void myHAS_SoundDriver::stopTokenUpdateLoop()
+{
+	keepRunning = false;
+	
+    //Kill the thread
+    if(tokenUpdateThread)
+    {
+        tokenUpdateThread->join();
+        delete tokenUpdateThread;
+        tokenUpdateThread = NULL;
+    }
+}
+
+void myHAS_SoundDriver::tokenUpdateLoop()
+{
+	while(keepRunning)
+    {
+		getGoolgeCloudToken();
+		sleep(500);
+	}
+}
