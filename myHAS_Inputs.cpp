@@ -9,7 +9,6 @@ myHAS_Inputs::myHAS_Inputs(myHAS_Displays *iDisp, myHAS_SoundDriver *iSound, myH
 
 void myHAS_Inputs::pressSnooze()
 {
-    //Add that in other state, pressing snooze will display temperature
     if(mode==m_PLAYER)
     {
         pDisp->setDisplayMode(dm_TIME);

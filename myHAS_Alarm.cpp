@@ -60,47 +60,55 @@ void myHAS_Alarm::importParameters()
 
 string myHAS_Alarm::getText(string iTextField)
 {
+    cout<<"getText("<<iTextField<<")"<<endl;
     time_t rawtime;
     struct tm *timeinfo;
     time(&rawtime);
     timeinfo = localtime(&rawtime);
+    cout<<"Rawtime = "<<rawtime<<endl;
 
     string request = pSQLClient->getStringValue("AlarmClock", ID, iTextField);
     string sTime = to_string(timeinfo->tm_hour) + " heures ";
     if(timeinfo->tm_min>0) 
         sTime += to_string(timeinfo->tm_min);
-	
+    
+    cout<<"Raw request = "<<request<<endl;
+    cout<<"Time = "<<sTime<<endl;
+    
     string sWeather = "";
     switch(pEnv->getTodayWeather().Weather)
-	{
-	    case W_SUN:
-		sWeather+="le temps est ensoleillé";
-		break;
-	    case W_PARTCLOUD:
-		sWeather+="le temps est nuageux";
-		break;
-	    case W_CLOUD:
-		sWeather+="le temps est couvert";
-		break;
-	    case W_RAIN:
-		sWeather+="le temps est pluvieux";
-		break;
-	    case W_SLEET:
-		sWeather+="attention au risque de pluie verglaçante";
-		break;
-	    case W_SNOW:
-		sWeather+="le temps est neigeux";
-		break;
-	    case W_WIND:
-		sWeather+="le temps est venteux";
-		break;
-	    case W_FOG:
-		sWeather+="le temps est brumeux";
-		break;
-	    case W_THUNDER:
-		sWeather+="le temps est orageux";
-		break;
-	}
+    {
+	case W_SUN:
+	    sWeather="le temps est ensoleillé";
+	    break;
+	case W_PARTCLOUD:
+	    sWeather="le temps est partiellement nuageux";
+	    break;
+	case W_CLOUD:
+	    sWeather="le temps est couvert";
+	    break;
+	case W_RAIN:
+	    sWeather="il pleut";
+	    break;
+	case W_SLEET:
+	    sWeather="attention au risque de pluie verglaçante";
+	    break;
+	case W_SNOW:
+	    sWeather="il neige";
+	    break;
+	case W_WIND:
+	    sWeather="il y a du vent";
+	    break;
+	case W_FOG:
+	    sWeather="il y a du brouillard";
+	    break;
+	case W_THUNDER:
+	    sWeather="il y a de l'orage";
+	    break;
+	default:
+	    break;
+    }
+    cout<<"Weather = "<<sWeather<<endl;
     
     int index=-1;
     if((index=request.find("#TIME#"))!=string::npos)
@@ -117,8 +125,9 @@ string myHAS_Alarm::getText(string iTextField)
         string sensorValue = to_string((int)pEnv->getSensorValue(stoi(sensorID)));
         request.replace(index, 14, sensorValue);
     }
-	
-	return request;
+
+    cout<<"Text = "<<request<<endl;
+    return request;
 }
 
 void myHAS_Alarm::startAlarmLoop()
@@ -327,14 +336,13 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
 
 void myHAS_Alarm::ringAlarm(string iAlarmSound)
 {
+    cout<<"ringAlarm"<<endl;
     if(pDisp)
         pDisp->setAlarmStatus(1);
-    cout<<"Alarm voice is "<<voiceName<<endl;
     if(pSound)
     {
 	string wkUpText = getText("WakeUpPhrase");
-	cout<<"wakeUp text "<<wkUpText<<endl;
-        pSound->readText(wkUpText, voiceName);
+	pSound->readText(wkUpText, voiceName);
 	
         //Allow to not start radio if snooze or off is pressed during wake-up phrase
         if(aState==as_ON)

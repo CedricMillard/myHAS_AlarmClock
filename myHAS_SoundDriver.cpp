@@ -77,6 +77,7 @@ string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 {
 	ttsText = iText;
+	
 	getMP3fromText(iVoiceName);
 	
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
@@ -86,9 +87,6 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 		string command = "mplayer -af volume=5:0 -nocache -noconsolecontrols -really-quiet "+pathToMP3File;
 		system(command.c_str());
 		digitalWrite(pinMute,0);
-        //delete the file to not have an outdated message
-        if(remove(pathToMP3File.c_str()))
-            cout<<"ERROR deleting "<<pathToMP3File<<endl;
 	}
 	else if (access(pathToMP3FileBackup.c_str(), F_OK) == 0)
 	{
@@ -142,6 +140,11 @@ void myHAS_SoundDriver::stopRadio()
 
 void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 {
+	//delete the file to not have an outdated message
+	if (access(pathToMP3File.c_str(), F_OK) == 0)
+		if(remove(pathToMP3File.c_str()))
+			cout<<"ERROR deleting "<<pathToMP3File<<endl;
+	
 	string languageCode = iVoiceName.substr(0,5);
 	cout<<"getMP3fromText()"<<endl;
     string ttsRequest="{'input':{'text':";
@@ -173,6 +176,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	if(list==NULL)
 	{
 		cout<<"ERROR adding in list"<<endl;
+		ttsText = "";
 		return;
 	}
 	list = curl_slist_append(list, "Content-Type: application/json; charset=utf-8");
@@ -185,13 +189,20 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	CURLcode res = curl_easy_perform(handle);
 	curl_slist_free_all(list);
 	if(res!=CURLE_OK)
-		cout<<"ERROR when requesting  TTS: "<<curl_easy_strerror(res)<<endl;		
-	if(audioJson.length()==0)
-		cout<<"ERROR, TTS output is empty"<<endl;
-	else
 	{
-		//cout<<"RESULT JSON: "<<audioJson<<endl;
+		cout<<"ERROR when requesting  TTS: "<<curl_easy_strerror(res)<<endl;		
+		ttsText="";
+		audioJson = "";
+		return;
 	}
+	if(audioJson.length()==0)
+	{
+		cout<<"ERROR, TTS output is empty"<<endl;
+		ttsText="";
+		audioJson = "";
+		return;
+	}
+	//cout<<"RESULT JSON: "<<audioJson<<endl;
 	curl_easy_cleanup(handle);
 	curl_global_cleanup();
 	
@@ -201,14 +212,27 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	if(!conSettings.IsObject())
 	{
 		cout<<"Json is corrupted: "<<audioJson<<endl;
+		audioJson = "";
+		ttsText="";
 		return;
 	}
 	if(!conSettings.HasMember("audioContent"))
 	{
 		cout<<"Json does not contain audio: "<<audioJson<<endl;
+		audioJson = "";
+		ttsText="";
 		return;
 	}
-	istringstream encodedString (conSettings["audioContent"].GetString());
+	
+	string audio = conSettings["audioContent"].GetString();
+	if(audio.length()==0)
+	{
+		cout<<"Empty Audio in Json. Request was "<<ttsRequest<<endl;
+		audioJson = "";
+		ttsText="";
+		return;
+	}
+	istringstream encodedString (audio);
 	ostringstream decodedString;
 	base64::decoder D;
 	D.decode(encodedString, decodedString);
