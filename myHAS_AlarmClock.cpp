@@ -36,7 +36,7 @@ int main()
 	
 	myHAS_SQLClient * pSQLClient = new myHAS_SQLClient();
 	
-	myHAS_SoundDriver* pSound = new myHAS_SoundDriver(pSQLClient);
+	myHAS_SoundDriver* pSound = new myHAS_SoundDriver(pSQLClient, pDisp);
 	pSound->startTokenUpdateLoop();
 		
 	myHAS_Alarm *pAlarm = new myHAS_Alarm(_ID_, pDisp, pSound, pEnv, pSQLClient);

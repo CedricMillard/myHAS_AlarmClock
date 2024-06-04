@@ -1,7 +1,9 @@
 #ifndef myHAS_Displays_h
 #define myHAS_Displays_h
 
+#include <time.h>
 #include <thread>
+#include <string>
 
 using namespace std;
 
@@ -25,6 +27,9 @@ class myHAS_Displays
     
     void setDisplayMode(displayMode iDispMode) {dispMode = iDispMode;}
     
+    //Display an alternative text (max 3 chars) for 3 seconds
+    void startTemporaryDisplay(string iText, int iDuration);
+    
     protected:
     virtual void runDisplay() = 0;
     
@@ -33,6 +38,8 @@ class myHAS_Displays
     bool keepRunning = true;
     thread dispThread;
     int alrmMode=0;
+    string temporaryText="";
+    time_t tempTextExpires=0;
 };
 
 #endif

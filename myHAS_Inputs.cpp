@@ -46,8 +46,10 @@ void myHAS_Inputs::pressSleep()
         if(pAlarm->getAlarmState()!=as_OFF)
             pAlarm->stopAlarm();
         else
-            pSound->playRadio();
+            pSound->changeRadio(0);
     }
+    else if (mode==m_PLAYER)
+        pSound->changeRadio(0);
 }
 
 void myHAS_Inputs::unPressSleep()
@@ -248,7 +250,7 @@ void myHAS_Inputs::audioSourceRadio(musicMode iRadioMode)
         else
         {
             pSound->stopBluetooth();
-            pSound->playRadio();
+            pSound->changeRadio(0);
             pDisp->setDisplayMode(dm_EQUALIZER);
         }
     }

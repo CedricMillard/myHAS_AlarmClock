@@ -14,6 +14,7 @@ class myHAS_DisplaySegments : public myHAS_Displays
     private:
 	// Display a number on the specified digit
 	void displaySegments (int iDigit, int iNumber, bool cat, bool iSemiColon);
+	int getCharValue(char iChar);
 
 	int catGPIO[2] = {15,16};
 	int gpioTable4[4]={4, 5, 6, 10};

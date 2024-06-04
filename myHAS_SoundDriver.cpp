@@ -17,19 +17,22 @@
 using namespace std;
 using namespace rapidjson;
 
-myHAS_SoundDriver::myHAS_SoundDriver(myHAS_SQLClient *iSQLClient)
+myHAS_SoundDriver::myHAS_SoundDriver(myHAS_SQLClient *iSQLClient, myHAS_Displays *iDisp)
 {
 	if(!iSQLClient)
 		return;
 	pSQLClient = iSQLClient;
 	listRadio = iSQLClient->getStringList("RadioStation","URI");
+	listRadioDisplayText = iSQLClient->getStringList("RadioStation","Display");
 	if(listRadio.size()==0)
 	{
 		cout<<"List of radio stations is empty"<<endl;
 		return;
 	}
 	currentRadio = listRadio[0];
-	
+	currentRadioIndex = 0;
+	curRadioDisp = listRadioDisplayText[currentRadioIndex];
+	pDisp = iDisp;
 	wiringPiSetup();
 	pinMode(pinMute, OUTPUT);
     pullUpDnControl(pinMute, PUD_DOWN);
@@ -108,7 +111,9 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 	stopBluetooth();
 	
 	if(iRadioURI.length()==0)
+	{
 		iRadioURI = currentRadio;
+	}
 	int pid = fork();
 	digitalWrite(pinMute,1);
 	if (pid==0)
@@ -248,7 +253,14 @@ void myHAS_SoundDriver::changeRadio(int iIndex)
 {
 	if(muzicMode != mm_RADIO)
 		return;
-		
+	
+	if(isRadioON() && iIndex==0)
+	{
+		curRadioDisp = listRadioDisplayText[currentRadioIndex];
+		pDisp->startTemporaryDisplay(curRadioDisp,2);
+		return;
+	}
+	
 	stopRadio();
 	currentRadioIndex = currentRadioIndex + iIndex;
 	if(currentRadioIndex >= listRadio.size())
@@ -257,6 +269,8 @@ void myHAS_SoundDriver::changeRadio(int iIndex)
 		currentRadioIndex = listRadio.size() - 1;
 		
 	currentRadio = listRadio[currentRadioIndex];
+	curRadioDisp = listRadioDisplayText[currentRadioIndex];
+	pDisp->startTemporaryDisplay(curRadioDisp,2);
 	playRadio();
 }
 
@@ -314,7 +328,7 @@ void myHAS_SoundDriver::playSound()
 	if(muzicMode==mm_BLUETOOTH)
 		startBluetooth();
 	else
-		playRadio();
+		changeRadio(0);
 }
 
 void myHAS_SoundDriver::stopSound()

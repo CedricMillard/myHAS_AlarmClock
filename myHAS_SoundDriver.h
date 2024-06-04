@@ -4,6 +4,7 @@
 #include <string>
 #include <thread>
 #include <time.h>
+#include "myHAS_Displays.h"
 #include "../include/ArrayCed.h"
 #include "../myHAS_Library/myHAS_SQLClient.h"
 
@@ -13,7 +14,7 @@ enum musicMode {mm_RADIO, mm_BLUETOOTH};
 class myHAS_SoundDriver
 {
     public:
-        myHAS_SoundDriver(myHAS_SQLClient *iSQLClient);
+        myHAS_SoundDriver(myHAS_SQLClient *iSQLClient, myHAS_Displays *iDisp);
         static size_t curlCallback(void *data, size_t size, size_t nmemb, void *clientp);
         size_t manageCurlOutput(void *data, size_t size, size_t nmemb);
         void readText(string iText, string iVoiceName);
@@ -44,9 +45,12 @@ class myHAS_SoundDriver
         string pathToMP3File = "/home/admin/bonjour.mp3";
         string pathToMP3FileBackup = "/home/admin/bonjour_backup.mp3";
         string currentRadio;
+        string curRadioDisp="   ";
         int currentRadioIndex = 0;
         Array<string> listRadio;
+        Array<string> listRadioDisplayText;
         string audioJson="";
+        myHAS_Displays *pDisp = NULL;
         myHAS_SQLClient *pSQLClient = NULL;
         int pinMute = 9;
         string gCloudToken="";

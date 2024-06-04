@@ -3,6 +3,7 @@
 #include <cmath>
 #include <time.h>
 #include <unistd.h> 
+#include "../myHAS_Library/myHAS_Utilities.h"
 
 myHAS_DisplaySegments::myHAS_DisplaySegments()
 {
@@ -35,7 +36,15 @@ void myHAS_DisplaySegments::runDisplay()
 
     while(keepRunning)
     {
-	switch (dispMode)
+	if(difftime(getUnixTime(),tempTextExpires)<=0)
+	{
+	    digit1 = 0;
+	    digit2 = getCharValue(temporaryText[0]);
+	    digit3 = getCharValue(temporaryText[1]);
+	    digit4 = getCharValue(temporaryText[2]);
+	    semiColon = false;
+	}
+	else switch (dispMode)
 	{
 	    case dm_ALARM:
 		semiColon = true;
@@ -99,6 +108,7 @@ void myHAS_DisplaySegments::runDisplay()
 		digit3 = (int)(timeinfo->tm_min /10);
 		digit4= timeinfo->tm_min %10;
 		
+		//To manage blinking the dots when there is an active alarm
 		if(rawtime%2 && alrmMode && alarmTime>=0)
 		    semiColon = false;
 		else
@@ -147,10 +157,11 @@ void myHAS_DisplaySegments::stopDisplay()
 */
 void myHAS_DisplaySegments::displaySegments (int iDigit, int iNumber, bool cat, bool iSemiColon)
 {
-    //0~9 = digits, 10="-", 11 = "_". 12 = "=", 13 = "///", 14="b", 15="t", 16="E", 17="r", 18=" "
-    int maskTable [19] = {123,96,94,118,101,55,63,112,127,119,4,2,6,22,47,15,23,12,0};
-    //0=OFF, 1="1" 2="2"
-    int maskTableDig1 [19] = {0,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
+    //0~9 = digits, 10="-", 11 = "_". 12 = "=", 13 = "///", 14="b", 15="t", 16="E", 17="r", 18 = " ", 
+    // 19 = "L", 20="i", 21="n", 22="J", 23="o", 24="u", 25="C", 26="A", 27="d", 28"H", 29"h"
+    int maskTable [30] = {123,96,94,118,101,55,63,112,127,119,4,2,6,22,47,15,23,12,0,11,32,44,98,46,42,27,125,110,109,45};
+    //0=OFF, 1="1" 2="2", rest is off
+    int maskTableDig1 [30] = {0,3,70,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0};
 
     int mask = maskTable[iNumber];
     int maskDig1 = maskTableDig1[iNumber];
@@ -188,3 +199,39 @@ void myHAS_DisplaySegments::displaySegments (int iDigit, int iNumber, bool cat, 
 	digitalWrite (gpioTable1[3], 0);
 }
 	
+int myHAS_DisplaySegments::getCharValue(char iChar)
+{
+    switch (iChar)
+    {
+	case '0': return 0;
+	case '1': return 1;
+	case '2': return 2;
+	case '3': return 3;
+	case '4': return 4;
+	case '5': return 5;
+	case '6': return 6;
+	case '7': return 7;
+	case '8': return 8;
+	case '9': return 9;
+	case '-': return 10;
+	case '_': return 11;
+	case '=': return 12;
+	case 'b': return 14;
+	case 't': return 15;
+	case 'E': return 16;
+	case 'r': return 17;
+	case ' ': return 18;
+	case 'L': return 19;
+	case 'i': return 20;
+	case 'n': return 21;
+	case 'J': return 22;
+	case 'o': return 23;
+	case 'u': return 24;
+	case 'C': return 25;
+	case 'A': return 26;
+	case 'd': return 27;
+	case 'H': return 28;
+	case 'h': return 29;
+	default: return 18;
+    }
+}

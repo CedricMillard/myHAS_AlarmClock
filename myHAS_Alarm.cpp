@@ -34,7 +34,8 @@ void myHAS_Alarm::importParameters()
     
     listRules.removeAll();
     nextAlarmTime= 99999;
-    pDisp->setAlarmTime(-1);
+    
+    //pDisp->setAlarmTime(-1);
     
     setManualAlarmTime(pSQLClient->getIntValue("AlarmClock", ID, "ManualAlarmTime"));
         
@@ -60,20 +61,15 @@ void myHAS_Alarm::importParameters()
 
 string myHAS_Alarm::getText(string iTextField)
 {
-    cout<<"getText("<<iTextField<<")"<<endl;
     time_t rawtime;
     struct tm *timeinfo;
     time(&rawtime);
     timeinfo = localtime(&rawtime);
-    cout<<"Rawtime = "<<rawtime<<endl;
-
+    
     string request = pSQLClient->getStringValue("AlarmClock", ID, iTextField);
     string sTime = to_string(timeinfo->tm_hour) + " heures ";
     if(timeinfo->tm_min>0) 
         sTime += to_string(timeinfo->tm_min);
-    
-    cout<<"Raw request = "<<request<<endl;
-    cout<<"Time = "<<sTime<<endl;
     
     string sWeather = "";
     switch(pEnv->getTodayWeather().Weather)
@@ -108,7 +104,6 @@ string myHAS_Alarm::getText(string iTextField)
 	default:
 	    break;
     }
-    cout<<"Weather = "<<sWeather<<endl;
     
     int index=-1;
     if((index=request.find("#TIME#"))!=string::npos)
@@ -126,7 +121,6 @@ string myHAS_Alarm::getText(string iTextField)
         request.replace(index, 14, sensorValue);
     }
 
-    cout<<"Text = "<<request<<endl;
     return request;
 }
 
@@ -173,36 +167,41 @@ void myHAS_Alarm::alarmLoop()
                 break;
             
             case am_AUTO:
-                for(int i=0; i<listRules.size(); i++)
-                {
-                    //cout<<"Rule "<<i<<" active "<<(int)listRules[i].active<<endl;
-                    if( listRules[i].active) 
-                    {
-                        computeNextAlarm(listRules[i], timeNow);
-                        if(((uint8_t)(pow(2,getDay())+128) & listRules[i].frequency) /*||  listRules[i].frequency==128*/)
-                        {
-                            if((timeNow - listRules[i].alarmTime*60)<=2 && (timeNow - listRules[i].alarmTime*60)>=0)
-                            {
-                                if(aState!=as_ON)
-                                {
-                                    aState = as_ON;
-                                    alarmTime = listRules[i].alarmTime*60;
-                                    nextAlarmTime= 99999;
-                                    pDisp->setAlarmTime(-1);
-                                    currentAlarmSound = listRules[i].alarmSound;
-                                    ringAlarm(currentAlarmSound);
-                                }
-                                if(listRules[i].frequency==128)
-                                {
-                                    listRules[i].active = false;
-                                    //update rule in SQL dB
-                                    updateRulesInDB();
-                                }
-                            }
-                        }
-                    }
-                }
-		
+		if(aState==as_ON)
+		    break;
+                if(aState!=as_SNOOZE)
+		{
+		    for(int i=0; i<listRules.size(); i++)
+		    {
+			//cout<<"Rule "<<i<<" active "<<(int)listRules[i].active<<endl;
+			if( listRules[i].active) 
+			{
+			    
+			    computeNextAlarm(listRules[i], timeNow);
+			    if(((uint8_t)(pow(2,getDay())+128) & listRules[i].frequency) /*||  listRules[i].frequency==128*/)
+			    {
+				if((timeNow - listRules[i].alarmTime*60)<=2 && (timeNow - listRules[i].alarmTime*60)>=0)
+				{
+				    if(aState!=as_ON)
+				    {
+					aState = as_ON;
+					//alarmTime = listRules[i].alarmTime*60;
+					nextAlarmTime= 99999;
+					pDisp->setAlarmTime(-1);
+					currentAlarmSound = listRules[i].alarmSound;
+					ringAlarm(currentAlarmSound);
+				    }
+				    if(listRules[i].frequency==128)
+				    {
+					listRules[i].active = false;
+					//update rule in SQL dB
+					updateRulesInDB();
+				    }
+				}
+			    }
+			}
+		    }
+		}
                 //Start in case of snooze 
                 if((timeNow - alarmTime) >= 0 && (timeNow - alarmTime) <= 2 && aState==as_SNOOZE)
                 {
@@ -263,6 +262,7 @@ void myHAS_Alarm::stopAlarm()
     {
         case am_MANUAL:
             alarmTime = manualAlarmTime*60;
+	    pDisp->setAlarmTime(alarmTime);
             break;
         
         case am_AUTO:
@@ -283,7 +283,10 @@ void myHAS_Alarm::snoozeAlarm()
         aState = as_SNOOZE;
         alarmTime = (getCurrentTimeSec() + snoozeTime*60)%(24*3600);
         if(pDisp)
+	{
+	    pDisp->setAlarmTime(alarmTime/60);
             pDisp->setAlarmStatus(2);
+	}
     }
 }
 
@@ -330,7 +333,7 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
         alarmTime = manualAlarmTime*60;
     }
     
-    if(pDisp)
+    if(pDisp && aState!=as_SNOOZE)
         pDisp->setAlarmTime(manualAlarmTime);
 }
 
@@ -355,6 +358,7 @@ void myHAS_Alarm::checkSQLUpdate()
     //file exists in folder, means sql table has changed
     if(!access(sqlFileCheck.c_str(),F_OK))
     {
+	cout<<"UpdateAlarmFromSQL()"<<endl;
         remove(sqlFileCheck.c_str());
         importParameters();        
     }
