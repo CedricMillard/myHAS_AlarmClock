@@ -267,6 +267,7 @@ void myHAS_Alarm::stopAlarm()
         
         case am_AUTO:
             alarmTime = -1;
+	    pDisp->setAlarmTime(-1);
             break;
         
         default:
