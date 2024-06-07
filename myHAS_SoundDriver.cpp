@@ -104,7 +104,8 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 }
 
 void myHAS_SoundDriver::playRadio(string iRadioURI)
-{	
+{
+	string radioURI = iRadioURI;	
 	if(isRadioON())
 		return;
 	
@@ -112,16 +113,16 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 	
 	if(iRadioURI.length()==0)
 	{
-		iRadioURI = currentRadio;
+		radioURI = currentRadio;
 	}
 	int pid = fork();
 	digitalWrite(pinMute,1);
 	if (pid==0)
 	{
 		
-		if(execlp("mplayer", "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
+		if(execlp("mplayer", "-nocache", "-noconsolecontrols", "-really-quiet", radioURI.c_str())==-1)
         {
-            cout<<getTimeStamp()<<" ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
+            cout<<getTimeStamp()<<" ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<radioURI<<endl;
             digitalWrite(pinMute,0);
             exit(-1);
         }
