@@ -26,7 +26,7 @@ myHAS_SoundDriver::myHAS_SoundDriver(myHAS_SQLClient *iSQLClient, myHAS_Displays
 	listRadioDisplayText = iSQLClient->getStringList("RadioStation","Display");
 	if(listRadio.size()==0)
 	{
-		cout<<"List of radio stations is empty"<<endl;
+		cout<<getTimeStamp()<<" List of radio stations is empty"<<endl;
 		return;
 	}
 	currentRadio = listRadio[0];
@@ -72,7 +72,7 @@ string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 			gCloudToken += buffer;
 		pclose(pipe);
 		tokenUpdateTime = getUnixTime();
-		cout<<"Google token updated"<<endl;
+		cout<<getTimeStamp()<<" Google token updated"<<endl;
 	}
 	return gCloudToken;
 }
@@ -93,14 +93,14 @@ void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 	}
 	else if (access(pathToMP3FileBackup.c_str(), F_OK) == 0)
 	{
-		cout<<"ERROR audio file not generated, playing back-up "<<pathToMP3File<<endl;
+		cout<<getTimeStamp()<<" ERROR audio file not generated, playing back-up "<<pathToMP3File<<endl;
 		digitalWrite(pinMute,1);
 		string command = "mplayer -af volume=5:0 -nocache -noconsolecontrols -really-quiet "+pathToMP3FileBackup;
 		system(command.c_str());
 		digitalWrite(pinMute,0);
 	}
 	else
-		cout<<"ERROR: FILE "<<pathToMP3File<<" not found"<<endl;
+		cout<<getTimeStamp()<<" ERROR: FILE "<<pathToMP3File<<" not found"<<endl;
 }
 
 void myHAS_SoundDriver::playRadio(string iRadioURI)
@@ -121,7 +121,7 @@ void myHAS_SoundDriver::playRadio(string iRadioURI)
 		
 		if(execlp("mplayer", "-nocache", "-noconsolecontrols", "-really-quiet", iRadioURI.c_str())==-1)
         {
-            cout<<"ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
+            cout<<getTimeStamp()<<" ERROR LAUNCHING mplayer "<<strerror(errno)<<" "<<iRadioURI<<endl;
             digitalWrite(pinMute,0);
             exit(-1);
         }
@@ -148,10 +148,10 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	//delete the file to not have an outdated message
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
 		if(remove(pathToMP3File.c_str()))
-			cout<<"ERROR deleting "<<pathToMP3File<<endl;
+			cout<<getTimeStamp()<<" ERROR deleting "<<pathToMP3File<<endl;
 	
 	string languageCode = iVoiceName.substr(0,5);
-	cout<<"getMP3fromText()"<<endl;
+	cout<<getTimeStamp()<<" getMP3fromText()"<<endl;
     string ttsRequest="{'input':{'text':";
 	ttsRequest += "\"" + ttsText + "\"";
 	ttsRequest+="},'voice':{'languageCode':";
@@ -172,7 +172,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	string token = getGoolgeCloudToken();
 	if (token.length()==0)
 	{
-		cout<<"Failed to retrieve gCloud token"<<endl;
+		cout<<getTimeStamp()<<" Failed to retrieve gCloud token"<<endl;
 		return;
 	}
 	token = "Authorization: Bearer "+token;
@@ -180,7 +180,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	list = curl_slist_append(list, strndup(token.c_str(),token.length()-1));
 	if(list==NULL)
 	{
-		cout<<"ERROR adding in list"<<endl;
+		cout<<getTimeStamp()<<" ERROR adding in list"<<endl;
 		ttsText = "";
 		return;
 	}
@@ -195,14 +195,14 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	curl_slist_free_all(list);
 	if(res!=CURLE_OK)
 	{
-		cout<<"ERROR when requesting  TTS: "<<curl_easy_strerror(res)<<endl;		
+		cout<<getTimeStamp()<<" ERROR when requesting  TTS: "<<curl_easy_strerror(res)<<endl;		
 		ttsText="";
 		audioJson = "";
 		return;
 	}
 	if(audioJson.length()==0)
 	{
-		cout<<"ERROR, TTS output is empty"<<endl;
+		cout<<getTimeStamp()<<" ERROR, TTS output is empty"<<endl;
 		ttsText="";
 		audioJson = "";
 		return;
@@ -216,14 +216,14 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	conSettings.Parse(audioJson.c_str());
 	if(!conSettings.IsObject())
 	{
-		cout<<"Json is corrupted: "<<audioJson<<endl;
+		cout<<getTimeStamp()<<" Json is corrupted: "<<audioJson<<endl;
 		audioJson = "";
 		ttsText="";
 		return;
 	}
 	if(!conSettings.HasMember("audioContent"))
 	{
-		cout<<"Json does not contain audio: "<<audioJson<<endl;
+		cout<<getTimeStamp()<<" Json does not contain audio: "<<audioJson<<endl;
 		audioJson = "";
 		ttsText="";
 		return;
@@ -232,7 +232,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	string audio = conSettings["audioContent"].GetString();
 	if(audio.length()==0)
 	{
-		cout<<"Empty Audio in Json. Request was "<<ttsRequest<<endl;
+		cout<<getTimeStamp()<<" Empty Audio in Json. Request was "<<ttsRequest<<endl;
 		audioJson = "";
 		ttsText="";
 		return;
@@ -246,7 +246,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	fclose(fBonjour);
 	audioJson = "";
     ttsText="";
-    cout<<"done with creating mp3 file"<<endl;
+    cout<<getTimeStamp()<<" done with creating mp3 file"<<endl;
 }
 
 void myHAS_SoundDriver::changeRadio(int iIndex)
@@ -309,7 +309,7 @@ void myHAS_SoundDriver::setMusicMode(musicMode iMode)
 
 void myHAS_SoundDriver::startBluetooth()
 {
-	cout<<"Start Bluetooth"<<endl;
+	cout<<getTimeStamp()<<" Start Bluetooth"<<endl;
 	string command = "systemctl --user unmask pulseaudio.socket && systemctl --user start pulseaudio.service";
 	system(command.c_str());
 	digitalWrite(pinMute,1);
@@ -317,7 +317,7 @@ void myHAS_SoundDriver::startBluetooth()
 
 void myHAS_SoundDriver::stopBluetooth()
 {
-	cout<<"Stop Bluetooth"<<endl;
+	cout<<getTimeStamp()<<" Stop Bluetooth"<<endl;
 	string command = "systemctl --user mask pulseaudio.socket && systemctl --user stop pulseaudio.service";
 	system(command.c_str());
 	digitalWrite(pinMute,0);

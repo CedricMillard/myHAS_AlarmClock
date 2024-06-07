@@ -126,6 +126,7 @@ string myHAS_Alarm::getText(string iTextField)
 
 void myHAS_Alarm::startAlarmLoop()
 {
+    cout<<getTimeStamp()<<" Start Alarm Loop"<<endl;
     stopAlarmLoop();
     keepRunning = true;
     alarmThread = new thread(&myHAS_Alarm::alarmLoop, this);
@@ -133,11 +134,13 @@ void myHAS_Alarm::startAlarmLoop()
 
 void myHAS_Alarm::stopAlarmLoop()
 {
-	keepRunning = false;
+    keepRunning = false;
 	
     //Kill the thread
     if(alarmThread)
     {
+	cout<<getTimeStamp()<<" Stop Alarm Loop"<<endl;
+    
         alarmThread->join();
         delete alarmThread;
         alarmThread = NULL;
@@ -252,6 +255,7 @@ void myHAS_Alarm::computeNextAlarm(Rule iRule, long icurrTime)
 
 void myHAS_Alarm::stopAlarm() 
 {
+    cout<<getTimeStamp()<<" Stop Alarm"<<endl;
     if(aState != as_OFF)
     {
         pDisp->setAlarmStatus(0);
@@ -278,6 +282,7 @@ void myHAS_Alarm::stopAlarm()
 
 void myHAS_Alarm::snoozeAlarm() 
 {
+    cout<<getTimeStamp()<<" Snooze Alarm"<<endl;
     if(aState==as_ON)
     {
         stopAlarm();
@@ -293,7 +298,7 @@ void myHAS_Alarm::snoozeAlarm()
 
 void myHAS_Alarm::setAlarmMode(alarmMode iMode)
 {
-    cout<<"setAlarmMode "<<iMode<<endl;
+    cout<<getTimeStamp()<<" setAlarmMode "<<iMode<<endl;
     if (iMode!=aMode)
     {
         aMode = iMode;
@@ -304,20 +309,20 @@ void myHAS_Alarm::setAlarmMode(alarmMode iMode)
             pDisp->setAlarmTime(-1);
 	    pDisp->setAlarmMode(1);
             startAlarmLoop();
-	    cout<<"Alarm loop started in auto mode"<<endl;
+	    cout<<getTimeStamp()<<" Alarm loop started in auto mode"<<endl;
             return;
         }
 	else if (iMode==am_MANUAL){
             pDisp->setAlarmTime(manualAlarmTime);
 	    pDisp->setAlarmMode(2);
 	    startAlarmLoop();
-	    cout<<"Alarm loop started in manual mode"<<endl;
+	    cout<<getTimeStamp()<<" Alarm loop started in manual mode"<<endl;
 	}        
         else{
             stopAlarmLoop();
 	    pDisp->setAlarmTime(manualAlarmTime);
 	    pDisp->setAlarmMode(0);
-	    cout<<"Alarm loop stopped"<<endl;
+	    cout<<getTimeStamp()<<" Alarm loop stopped"<<endl;
 	}
     }
 }
@@ -340,7 +345,7 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
 
 void myHAS_Alarm::ringAlarm(string iAlarmSound)
 {
-    cout<<"ringAlarm"<<endl;
+    cout<<getTimeStamp()<<" ringAlarm"<<endl;
     if(pDisp)
         pDisp->setAlarmStatus(1);
     if(pSound)
@@ -359,7 +364,7 @@ void myHAS_Alarm::checkSQLUpdate()
     //file exists in folder, means sql table has changed
     if(!access(sqlFileCheck.c_str(),F_OK))
     {
-	cout<<"UpdateAlarmFromSQL()"<<endl;
+	cout<<getTimeStamp()<<" UpdateAlarmFromSQL()"<<endl;
         remove(sqlFileCheck.c_str());
         importParameters();        
     }
