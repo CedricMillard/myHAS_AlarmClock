@@ -355,7 +355,11 @@ void myHAS_Alarm::ringAlarm(string iAlarmSound)
 	
         //Allow to not start radio if snooze or off is pressed during wake-up phrase
         if(aState==as_ON)
-            pSound->playRadio(iAlarmSound);
+	{
+            if (iAlarmSound.length()>0) pSound->playRadio(iAlarmSound);
+	    else pSound->changeRadio(0);
+	}
+	    
     }
 }
 

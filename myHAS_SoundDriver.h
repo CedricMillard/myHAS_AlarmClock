@@ -18,7 +18,7 @@ class myHAS_SoundDriver
         static size_t curlCallback(void *data, size_t size, size_t nmemb, void *clientp);
         size_t manageCurlOutput(void *data, size_t size, size_t nmemb);
         void readText(string iText, string iVoiceName);
-        void playRadio(string iRadioURI="");
+        void playRadio(string iRadioURI);
         void stopRadio();
         //if index==1 => next station, if index = -1 prev station
         void changeRadio(int iIndex);
