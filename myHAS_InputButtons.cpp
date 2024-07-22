@@ -1,12 +1,12 @@
 /**
  * 
  */
-
 #include "myHAS_InputButtons.h"
 #include <unistd.h> 
 #include <iostream> 
 #include <wiringPi.h>
 #include <sys/time.h>
+#include "../myHAS_Library/myHAS_Utilities.h"
 
 myHAS_InputButtons * myHAS_InputButtons::getInputButtons(myHAS_Displays *iDisp, myHAS_SoundDriver *iSound, myHAS_Alarm *iAlarm)
 {
@@ -30,6 +30,7 @@ myHAS_InputButtons * myHAS_InputButtons::getInputButtons(myHAS_Displays *iDisp, 
 
 void myHAS_InputButtons::buttonCallback()
 {
+    pInputButtons->callbackIsActive = true;
     //debouncing buttons => filter out event coming less than 20ms from last interrupt
     //Does not work well, better to try with a capacitor
     unsigned int deltaT = millis() - pInputButtons->lastInterrupt;
@@ -51,7 +52,10 @@ void myHAS_InputButtons::buttonCallback()
     
     //No change, skip
     if(!deltaB && !deltaS)
+    {
+        pInputButtons->callbackIsActive = false;
         return;
+    }
     
     //A button has been pressed or released
     //order : Time, Hour, Min, Alarm, Sleep, Snooze
@@ -122,21 +126,25 @@ void myHAS_InputButtons::buttonCallback()
                 break;
                 
             case 0b0111:
+                cout<<getTimeStamp()<<" Change mode to OFF"<<endl;
                 pInputButtons->setMode(m_OFF);
                 break;
             
             //radio mode
             case 0b1011:
+                cout<<getTimeStamp()<<" Change mode to PLAYER"<<endl;
                 pInputButtons->setMode(m_PLAYER);
                 break;
         
             //auto alarm mode
             case 0b1101:
+                cout<<getTimeStamp()<<" Change mode to AUTO_ALARM"<<endl;
                 pInputButtons->setMode(m_AUTO_ALARM);
                 break;
             
             //manual alarm mode
             case 0b1110:
+                cout<<getTimeStamp()<<" Change mode to MAN_ALARM"<<endl;   
                 pInputButtons->setMode(m_MAN_ALARM);
                 break;
                 
@@ -151,6 +159,8 @@ void myHAS_InputButtons::buttonCallback()
         //If currSelectorState = 0 it means we have selected radio
         pInputButtons->audioSourceRadio(currSelectorState%2 ? mm_BLUETOOTH : mm_RADIO);
     }
+    
+    pInputButtons->callbackIsActive = false;
 }
 
 myHAS_InputButtons::myHAS_InputButtons(myHAS_Displays *iDisp, myHAS_SoundDriver *iSound, myHAS_Alarm *iAlarm):myHAS_Inputs(iDisp, iSound, iAlarm)

@@ -126,8 +126,8 @@ string myHAS_Alarm::getText(string iTextField)
 
 void myHAS_Alarm::startAlarmLoop()
 {
-    cout<<getTimeStamp()<<" Start Alarm Loop"<<endl;
     stopAlarmLoop();
+    cout<<getTimeStamp()<<" Start Alarm Loop"<<endl;
     keepRunning = true;
     alarmThread = new thread(&myHAS_Alarm::alarmLoop, this);
 }
@@ -266,7 +266,7 @@ void myHAS_Alarm::stopAlarm()
     {
         case am_MANUAL:
             alarmTime = manualAlarmTime*60;
-	    pDisp->setAlarmTime(alarmTime);
+	    pDisp->setAlarmTime(manualAlarmTime);
             break;
         
         case am_AUTO:
@@ -340,7 +340,9 @@ void myHAS_Alarm::setManualAlarmTime(long iTime)
     }
     
     if(pDisp && aState!=as_SNOOZE)
-        pDisp->setAlarmTime(manualAlarmTime);
+    {
+	pDisp->setAlarmTime(manualAlarmTime);
+    }
 }
 
 void myHAS_Alarm::ringAlarm(string iAlarmSound)

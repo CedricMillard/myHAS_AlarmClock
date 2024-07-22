@@ -7,7 +7,7 @@
 
 using namespace std;
 
-enum MODE {m_OFF, m_PLAYER, m_MAN_ALARM, m_AUTO_ALARM};
+enum MODE {m_OFF, m_PLAYER, m_AUTO_ALARM, m_MAN_ALARM};
 
 class myHAS_Inputs
 {

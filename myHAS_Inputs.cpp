@@ -194,7 +194,9 @@ void myHAS_Inputs::unPressTime()
 void myHAS_Inputs::setMode(MODE iMode)
 {
     if(iMode == mode)
+    {
         return;
+    }
     mode = iMode;
     switch(mode)
     {
@@ -209,11 +211,19 @@ void myHAS_Inputs::setMode(MODE iMode)
             pAlarm->setAlarmMode(am_OFF);
             //Stop the radio if it was started with sleep button
             pSound->stopSound();
-			pSound->playSound();
-			if(pSound->getMusicMode()==mm_RADIO)
-                pDisp->setDisplayMode(dm_EQUALIZER);
+            if(mode!=m_PLAYER)
+                break;
+            pSound->playSound();
+            //in case mode has already changed as play sound is a bit slow
+            if(mode==m_PLAYER)
+            {
+                if(pSound->getMusicMode()==mm_RADIO)
+                    pDisp->setDisplayMode(dm_EQUALIZER);
+                else
+                    pDisp->setDisplayMode(dm_BLUETOOTH);
+            }
             else
-                pDisp->setDisplayMode(dm_BLUETOOTH);
+                pSound->stopSound();
             break;
             
         case m_AUTO_ALARM:

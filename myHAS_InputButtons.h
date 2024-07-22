@@ -38,6 +38,7 @@ class myHAS_InputButtons : public myHAS_Inputs
         int prevSelectorState = 0;
         unsigned int lastInterrupt = 0; 
         
+        bool callbackIsActive = false;
         
         bool keepRunning = true;
 };
