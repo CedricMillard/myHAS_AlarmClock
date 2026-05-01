@@ -43,31 +43,38 @@ myHAS_SoundDriver::myHAS_SoundDriver(myHAS_SQLClient *iSQLClient, myHAS_Displays
 
 size_t myHAS_SoundDriver::curlCallback(void *data, size_t size, size_t nmemb, void *clientp)
 {
-	return ((myHAS_SoundDriver*)clientp)->manageCurlOutput(data, size, nmemb);
+	myHAS_SoundDriver* handler = static_cast<myHAS_SoundDriver*>(clientp);
+	if (handler)
+		return handler->manageCurlOutput(data, size, nmemb);
+	return 0;
 }
 
 size_t myHAS_SoundDriver::manageCurlOutput(void *data, size_t size, size_t nmemb)
 {
 	size_t realsize = size*nmemb;
-
+	if (realsize==0) 
+		cout<<getTimeStamp()<<" myHAS_SoundDriver::manageCurlOutput size=0"<<endl;
+	
+	audioJson.append((char*)data, realsize);
+/*
 	char *ptr = (char*)malloc((realsize+1)*sizeof(char));
 	strncpy(ptr, (const char*)data,realsize);
 	ptr[realsize] = '\0';
 	
-	audioJson+=string(ptr);
+	audioJson.append(ptr);*/
 
 	return realsize;
 }
 
 string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 {
-	//update token if empty or older than a day
+	//update token if empty or every hours
 	if (gCloudToken.length()==0 || difftime(getUnixTime(), tokenUpdateTime)>=3000 || iForce)
 	{
 		gCloudToken = "";
 		char buffer[128];
 		FILE * pipe = popen("gcloud auth application-default print-access-token","r");
-		if (!pipe) return "";
+		if (!pipe) return gCloudToken;
 		while (fgets(buffer, sizeof(buffer), pipe) !=NULL)
 			gCloudToken += buffer;
 		pclose(pipe);
@@ -79,8 +86,10 @@ string myHAS_SoundDriver::getGoolgeCloudToken(bool iForce)
 
 void myHAS_SoundDriver::readText(string iText, string iVoiceName)
 {
+	if(iText.length()==0 || iVoiceName.length()==0)
+		return;
+		
 	ttsText = iText;
-	
 	getMP3fromText(iVoiceName);
 	
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
@@ -144,11 +153,20 @@ void myHAS_SoundDriver::stopRadio()
 
 void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 {
+	audioJson="";
 	//delete the file to not have an outdated message
 	if (access(pathToMP3File.c_str(), F_OK) == 0)
 		if(remove(pathToMP3File.c_str()))
 			cout<<getTimeStamp()<<" ERROR deleting "<<pathToMP3File<<endl;
 	
+	if(iVoiceName.length()<5)
+	{
+		ttsText = "";
+		//audioJson = "";
+		cout<<getTimeStamp()<<" ERROR myHAS_SoundDriver::getMP3fromText voice name wrong "<<iVoiceName<<endl;
+		return;
+	}
+		
 	string languageCode = iVoiceName.substr(0,5);
 	cout<<getTimeStamp()<<" getMP3fromText()"<<endl;
     string ttsRequest="{'input':{'text':";
@@ -187,7 +205,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	curl_easy_setopt(handle, CURLOPT_HTTPHEADER, list);
 	
 	curl_easy_setopt(handle, CURLOPT_POSTFIELDS, ttsRequest.c_str());
-	
+	curl_easy_setopt(handle, CURLOPT_HEADERFUNCTION, NULL);
 	curl_easy_setopt(handle, CURLOPT_WRITEFUNCTION, curlCallback);
 	curl_easy_setopt(handle, CURLOPT_WRITEDATA, (void *)this);
 	CURLcode res = curl_easy_perform(handle);
@@ -196,14 +214,14 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	{
 		cout<<getTimeStamp()<<" ERROR when requesting  TTS: "<<curl_easy_strerror(res)<<endl;		
 		ttsText="";
-		audioJson = "";
+		//audioJson = "";
 		return;
 	}
 	if(audioJson.length()==0)
 	{
 		cout<<getTimeStamp()<<" ERROR, TTS output is empty"<<endl;
 		ttsText="";
-		audioJson = "";
+		//audioJson = "";
 		return;
 	}
 	//cout<<"RESULT JSON: "<<audioJson<<endl;
@@ -216,14 +234,14 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	if(!conSettings.IsObject())
 	{
 		cout<<getTimeStamp()<<" Json is corrupted: "<<audioJson<<endl;
-		audioJson = "";
+		//audioJson = "";
 		ttsText="";
 		return;
 	}
 	if(!conSettings.HasMember("audioContent"))
 	{
 		cout<<getTimeStamp()<<" Json does not contain audio: "<<audioJson<<endl;
-		audioJson = "";
+		//audioJson = "";
 		ttsText="";
 		return;
 	}
@@ -232,7 +250,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	if(audio.length()==0)
 	{
 		cout<<getTimeStamp()<<" Empty Audio in Json. Request was "<<ttsRequest<<endl;
-		audioJson = "";
+		//audioJson = "";
 		ttsText="";
 		return;
 	}
@@ -243,7 +261,7 @@ void myHAS_SoundDriver::getMP3fromText(string iVoiceName)
 	FILE * fBonjour = fopen(pathToMP3File.c_str(), "w"); 
 	fwrite(decodedString.str().c_str(), sizeof(char), decodedString.str().length(), fBonjour);
 	fclose(fBonjour);
-	audioJson = "";
+	//audioJson = "";
     ttsText="";
     cout<<getTimeStamp()<<" done with creating mp3 file"<<endl;
 }

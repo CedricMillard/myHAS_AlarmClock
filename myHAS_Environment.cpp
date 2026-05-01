@@ -4,6 +4,7 @@
 #include <time.h>
 #include "../include/rapidjson/document.h"
 #include "../include/rapidjson/stringbuffer.h"
+#include "../myHAS_Library/myHAS_Utilities.h"
 
 using namespace rapidjson;
 using namespace std;
@@ -22,11 +23,15 @@ void myHAS_Environment::setTopics()
 
 void myHAS_Environment::mqtt_message(struct mosquitto *mosq, void *obj, const struct mosquitto_message *msg)
 {
-	string topic = msg->topic;
+	if (msg->topic == NULL || msg->payload == NULL)
+  {
+    cout<<getTimeStamp()<<" myHAS_Environment::mqtt_message mqtt message corrupted"<<endl;
+    return;
+  }
+  string topic = msg->topic;
   string sPayload = (char*)msg->payload;
+  //cout<<getTimeStamp()<<" myHAS_Environment::mqtt_message "<<topic<<" = "<<sPayload<<endl;
   
-  //cout<<topic<<" : "<<sPayload<<endl; 
-
   if(topic.find("/sensor/")!=string::npos)
   {
     //retrieve ID of the prise
@@ -41,7 +46,7 @@ void myHAS_Environment::mqtt_message(struct mosquitto *mosq, void *obj, const st
     }
     if(topic.find("/type")!=string::npos)
     {
-      if(!sensorUnits.exists(iID))
+      if(!sensorUnits.exists(iID) && sPayload.length()>0)
       {
         switch(stoi(sPayload))
         {
@@ -90,18 +95,21 @@ void myHAS_Environment::setSensorValue(int iSensorId, float iValue)
 void myHAS_Environment::setWeatherDaily(string iWeatherJson)
 {
     //Decode json
-	Document weatherJsonDoc;
-	weatherJsonDoc.Parse(iWeatherJson.c_str());
+    cout<<getTimeStamp()<<" myHAS_Environment::setWeatherDaily "<<endl;
+    Document weatherJsonDoc;
+    weatherJsonDoc.Parse(iWeatherJson.c_str());
     Value::ConstValueIterator itr; 
     int i = 0;
     for(itr = weatherJsonDoc["daily"].Begin(); itr!=weatherJsonDoc["daily"].End(); ++itr)
     {
-        weather_d[i].Weather = (short) itr->GetObject()["weather"].GetInt();
+        weather_d[i].WeatherCode = (short) itr->GetObject()["weather"].GetInt();
+        weather_d[i].Icon = (short)itr->GetObject()["icon"].GetInt();
         weather_d[i].Tmax = (float)itr->GetObject()["Tmax"].GetFloat();
         weather_d[i].Tmin = (float)itr->GetObject()["Tmin"].GetFloat();
         weather_d[i].Wind = (float)itr->GetObject()["wind"].GetFloat();
         weather_d[i].T6 = (float)itr->GetObject()["T6"].GetFloat();
         weather_d[i].updateTime = (long)itr->GetObject()["time"].GetInt64();
+        
         i++;
         if(i>4) break;
     }
@@ -109,13 +117,16 @@ void myHAS_Environment::setWeatherDaily(string iWeatherJson)
 
 void myHAS_Environment::setWeatherHourly(string iWeatherJson)
 {
+    cout<<getTimeStamp()<<" myHAS_Environment::setWeatherHourly "<<endl;
     Document weatherJsonDoc;
-	weatherJsonDoc.Parse(iWeatherJson.c_str());
+    weatherJsonDoc.Parse(iWeatherJson.c_str());
     Value::ConstValueIterator itr; 
     int i = 0;
     for(itr = weatherJsonDoc["hourly"].Begin(); itr!=weatherJsonDoc["hourly"].End(); ++itr)
     {
-        weather_h[i].Weather = (short) itr->GetObject()["weather"].GetInt();
+        weather_h[i].WeatherCode = (short) itr->GetObject()["weather"].GetInt();
+        weather_h[i].Icon = (short) itr->GetObject()["icon"].GetInt();
+        weather_h[i].Humidity = (int) itr->GetObject()["humidity"].GetInt();
         weather_h[i].Tmax = weather_h[i].Tmin = (float)itr->GetObject()["Temp"].GetFloat();
         weather_h[i].Wind = (float)itr->GetObject()["wind"].GetFloat();
         weather_h[i].updateTime = (long)itr->GetObject()["time"].GetInt64();
@@ -190,8 +201,9 @@ bool operator==(const Weather& lhs, const Weather& rhs)
     if(lhs.Tmax!=rhs.Tmax) return false;
     if(lhs.Tmin!=rhs.Tmin) return false;
     if(lhs.T6!=rhs.T6) return false;
-    if(lhs.Weather!=rhs.Weather) return false;
+    if(lhs.WeatherCode!=rhs.WeatherCode) return false;
     if(lhs.Wind!=rhs.Wind) return false;
+    if(lhs.Humidity!=rhs.Humidity) return false;
     
     return true;
 }
@@ -199,4 +211,15 @@ bool operator==(const Weather& lhs, const Weather& rhs)
 bool operator!=(const Weather& lhs, const Weather& rhs)
 {
     return !(lhs==rhs);
+}
+
+string myHAS_Environment::getWeatherDescription(int iWeatherCode)
+{
+  auto it = weatherMap.find(iWeatherCode);
+  
+  if (it != weatherMap.end()) {
+      WeatherInfo info = it->second;
+      return info.description;
+  }
+  return "";
 }

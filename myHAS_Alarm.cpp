@@ -1,6 +1,7 @@
 /**
  * TODO: 
  *  - Move weather text to config file to manage several language
+ *  - Update weather code by WMO definition (Environment class will provide the description) row 76
  * 
  */
 
@@ -71,48 +72,36 @@ string myHAS_Alarm::getText(string iTextField)
     if(timeinfo->tm_min>0) 
         sTime += to_string(timeinfo->tm_min);
     
-    string sWeather = "";
-    switch(pEnv->getTodayWeather().Weather)
+    int wDay = 0;
+    string sWhen = "aujourd'hui";
+    
+    if (timeinfo->tm_hour > 17)
     {
-	case W_SUN:
-	    sWeather="le temps est ensoleillé";
-	    break;
-	case W_PARTCLOUD:
-	    sWeather="le temps est partiellement nuageux";
-	    break;
-	case W_CLOUD:
-	    sWeather="le temps est couvert";
-	    break;
-	case W_RAIN:
-	    sWeather="il pleut";
-	    break;
-	case W_SLEET:
-	    sWeather="attention au risque de pluie verglaçante";
-	    break;
-	case W_SNOW:
-	    sWeather="il neige";
-	    break;
-	case W_WIND:
-	    sWeather="il y a du vent";
-	    break;
-	case W_FOG:
-	    sWeather="il y a du brouillard";
-	    break;
-	case W_THUNDER:
-	    sWeather="il y a de l'orage";
-	    break;
-	default:
-	    break;
+	wDay = 1;
+	sWhen = "demain";
     }
     
+    Weather weather = pEnv->getWeatherDay(wDay);
     int index=-1;
+        
+    if((index=request.find("#WHEN#"))!=string::npos)
+        request.replace(index, 6, sWhen);
+	    
     if((index=request.find("#TIME#"))!=string::npos)
         request.replace(index, 6, sTime);
     
     index=-1;
     if((index=request.find("#WEATHER#"))!=string::npos)
-        request.replace(index, 9, sWeather);
+        request.replace(index, 9, pEnv->getWeatherDescription(weather.WeatherCode));
+	
+    index=-1;
+    if((index=request.find("#T_MIN#"))!=string::npos)
+        request.replace(index, 7, to_string((int) weather.Tmin));
         
+    index=-1;
+    if((index=request.find("#T_MAX#"))!=string::npos)
+        request.replace(index, 7, to_string((int) weather.Tmax));
+	
     index=-1;
     if((index=request.find("#SENSOR_"))!=string::npos)
     {
@@ -181,7 +170,7 @@ void myHAS_Alarm::alarmLoop()
 			{
 			    
 			    computeNextAlarm(listRules[i], timeNow);
-			    if(((uint8_t)(pow(2,getDay())+128) & listRules[i].frequency) /*||  listRules[i].frequency==128*/)
+			    if(((uint8_t)(pow(2,getDay())+128) & listRules[i].frequency))
 			    {
 				if((timeNow - listRules[i].alarmTime*60)<=2 && (timeNow - listRules[i].alarmTime*60)>=0)
 				{
@@ -229,8 +218,7 @@ void myHAS_Alarm::alarmLoop()
 void myHAS_Alarm::computeNextAlarm(Rule iRule, long icurrTime)
 {
     int today = getDay();
-    int tomorrow = getDay()+1;
-    if(tomorrow>6) tomorrow = 0;
+    int tomorrow = (today+1)%7;
     bool tryMore = true;
     
     if(((uint8_t)(pow(2,today)+128) & iRule.frequency))
@@ -282,9 +270,9 @@ void myHAS_Alarm::stopAlarm()
 
 void myHAS_Alarm::snoozeAlarm() 
 {
-    cout<<getTimeStamp()<<" Snooze Alarm"<<endl;
     if(aState==as_ON)
     {
+	cout<<getTimeStamp()<<" Snooze Alarm"<<endl;
         stopAlarm();
         aState = as_SNOOZE;
         alarmTime = (getCurrentTimeSec() + snoozeTime*60)%(24*3600);

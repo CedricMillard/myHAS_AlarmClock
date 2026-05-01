@@ -41,10 +41,10 @@ class myHAS_SoundDriver
                 
         int ttsPlayerPid = -1;
         int radioPlayerPid = -1;
-        string ttsText;
+        string ttsText = "";
         string pathToMP3File = "/home/admin/bonjour.mp3";
         string pathToMP3FileBackup = "/home/admin/bonjour_backup.mp3";
-        string currentRadio;
+        string currentRadio = "";
         string curRadioDisp="   ";
         int currentRadioIndex = 0;
         Array<string> listRadio;

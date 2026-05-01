@@ -17,7 +17,7 @@ struct Rule
 {
   int alarmTime = -1;
 
-  string alarmSound;
+  string alarmSound="";
   //Freq coded on 8 bits. higher bit means one time only
   // example: 10000000 = 128 => one time, no repeat
   //          01000001 = 65 => every saturday and sunday (2^0 = sunday, 2^1 = monday...)
@@ -75,7 +75,7 @@ class myHAS_Alarm
         int snoozeTime = 1; //in minutes
         
         Array<Rule> listRules;
-        string currentAlarmSound;
+        string currentAlarmSound="";
         
         string sqlFileCheck = "/temp/alarmclock.change";
 };

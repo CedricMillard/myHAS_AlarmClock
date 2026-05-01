@@ -16,10 +16,6 @@
 //#define _SCREEN_
 //#define _KEYBOARD_
 
-#ifndef _KEYBOARD_
-myHAS_InputButtons* myHAS_InputButtons::pInputButtons = NULL;
-#endif
-
 int main()
 {	
 	myHAS_Environment * pEnv = new myHAS_Environment();

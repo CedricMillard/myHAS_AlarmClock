@@ -8,6 +8,8 @@
 #include <sys/time.h>
 #include "../myHAS_Library/myHAS_Utilities.h"
 
+myHAS_InputButtons* myHAS_InputButtons::pInputButtons = NULL;
+
 myHAS_InputButtons * myHAS_InputButtons::getInputButtons(myHAS_Displays *iDisp, myHAS_SoundDriver *iSound, myHAS_Alarm *iAlarm)
 {
     if(!pInputButtons)
